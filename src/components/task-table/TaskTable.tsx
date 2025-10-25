@@ -5,6 +5,11 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import type { Task } from "@/types/task";
+import TaskRow from "./TaskRow";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 interface TaskTableProps {
   data: Task[];
@@ -50,34 +55,16 @@ export function TaskTable({ data, columns, onAddTask }: TaskTableProps) {
       </div>
 
       {/* Table Body */}
-      <div>
-        {table.getRowModel().rows.map((row) => (
-          <div
-            key={row.id}
-            className="flex border-b border-gray-100 hover:bg-gray-50 transition-colors"
-          >
-            {row.getVisibleCells().map((cell) => {
-              const size = cell.column.columnDef.size;
-              const isTaskColumn = cell.column.id === "task";
-              const minWidth = isTaskColumn ? 250 : size;
-
-              return (
-                <div
-                  key={cell.id}
-                  className="px-3 py-2.5 flex items-center border-r border-gray-100 last:border-r-0 min-h-[42px]"
-                  style={{
-                    width: size ? `${size}px` : undefined,
-                    minWidth: minWidth ? `${minWidth}px` : undefined,
-                    flex: isTaskColumn ? "1" : undefined,
-                  }}
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+      <SortableContext
+        items={table.getRowModel().rows.map((row) => row.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div>
+          {table.getRowModel().rows.map((row) => (
+            <TaskRow key={row.id} row={row} />
+          ))}
+        </div>
+      </SortableContext>
 
       {/* Add Task Row */}
       {onAddTask && (

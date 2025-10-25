@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { Bucket } from "@/types/task";
 import { TaskTable } from "./TaskTable";
 import { taskColumns } from "./columns";
+import { AnimatePresence, motion } from "framer-motion";
+import { useDroppable } from "@dnd-kit/core";
 
 interface BucketSectionProps {
   bucket: Bucket;
@@ -10,6 +12,11 @@ interface BucketSectionProps {
 
 export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(bucket.collapsed);
+
+  const { setNodeRef } = useDroppable({
+    id: bucket.id,
+    data: { type: "bucket", bucket },
+  });
 
   const getBucketCountClass = () => {
     if (!bucket.limit) {
@@ -63,7 +70,7 @@ export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
   };
 
   return (
-    <div className={getContainerClass()}>
+    <div ref={setNodeRef} className={getContainerClass()}>
       {/* Bucket Header */}
       <div
         className={getHeaderClass()}
@@ -89,13 +96,22 @@ export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
       </div>
 
       {/* Table Content */}
-      {!isCollapsed && (
-        <TaskTable
-          data={bucket.tasks}
-          columns={taskColumns}
-          onAddTask={onAddTask}
-        />
-      )}
+      <AnimatePresence initial={false}>
+        {!isCollapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <TaskTable
+              data={bucket.tasks}
+              columns={taskColumns}
+              onAddTask={onAddTask}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

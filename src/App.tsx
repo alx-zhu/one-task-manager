@@ -1,7 +1,36 @@
-import { BucketSection } from '@/components/task-table';
-import { mockBuckets } from '@/data/mockData';
+import { useState } from "react";
+import { BucketSection } from "@/components/task-table";
+import { mockBuckets } from "@/data/mockData";
+import {
+  DndContext,
+  DragOverlay,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import { TaskRowPreview } from "./components/task-table/TaskRowPreview";
+import type { Task } from "./types/task";
 
 function App() {
+  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const task: Task = event.active.data.current?.task;
+    setDraggedTask(task);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over) {
+      console.log(`Dragged item ${active.id} over ${over.id}`);
+      // Implement logic to reorder tasks or move between buckets
+    }
+    setDraggedTask(null);
+  };
+
+  const handleDragCancel = () => {
+    setDraggedTask(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
@@ -34,15 +63,25 @@ function App() {
         </div>
 
         {/* Buckets */}
-        <div>
-          {mockBuckets.map((bucket) => (
-            <BucketSection 
-              key={bucket.id} 
-              bucket={bucket}
-              onAddTask={() => console.log(`Add task to ${bucket.name}`)}
-            />
-          ))}
-        </div>
+        <DndContext
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          <div>
+            {mockBuckets.map((bucket) => (
+              <BucketSection
+                key={bucket.id}
+                bucket={bucket}
+                onAddTask={() => console.log(`Add task to ${bucket.name}`)}
+              />
+            ))}
+          </div>
+
+          <DragOverlay>
+            {draggedTask ? <TaskRowPreview task={draggedTask} /> : null}
+          </DragOverlay>
+        </DndContext>
       </div>
     </div>
   );
