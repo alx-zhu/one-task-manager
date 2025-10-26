@@ -3,7 +3,13 @@ import type { Bucket } from "@/types/task";
 import { TaskTable } from "./TaskTable";
 import { taskColumns } from "./columns";
 import { AnimatePresence, motion } from "framer-motion";
-import { useDroppable } from "@dnd-kit/core";
+import { useDroppable, useDndContext } from "@dnd-kit/core";
+import { cn } from "@/lib/utils";
+import type {
+  BucketDragDataType,
+  DragDataType,
+  TaskDragDataType,
+} from "@/types/dnd";
 
 interface BucketSectionProps {
   bucket: Bucket;
@@ -13,10 +19,24 @@ interface BucketSectionProps {
 export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(bucket.collapsed);
 
+  const { active, over } = useDndContext();
+
   const { setNodeRef } = useDroppable({
     id: bucket.id,
-    data: { type: "bucket", bucket },
+    data: { type: "bucket", bucket } satisfies BucketDragDataType,
   });
+
+  const activeData = active?.data?.current as TaskDragDataType;
+  const isAtCapacity =
+    activeData?.task &&
+    bucket.limit &&
+    bucket.tasks.length >= bucket.limit &&
+    activeData.task.bucketId !== bucket.id;
+
+  const overData = over?.data?.current as DragDataType;
+  const isOver =
+    (overData?.type === "bucket" && over?.id === bucket.id) ||
+    (overData?.type === "task" && bucket.id === overData?.task.bucketId);
 
   const getBucketCountClass = () => {
     if (!bucket.limit) {
@@ -35,24 +55,43 @@ export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
   };
 
   const getContainerClass = () => {
-    if (bucket.isOneThing) {
-      return "bg-white border-2 border-gray-900 rounded-lg overflow-hidden mb-8";
-    }
-    return "bg-white border border-gray-200 rounded-lg overflow-hidden mb-4";
+    return cn(
+      "rounded-lg overflow-hidden mb-4 transition-all duration-200 bg-white",
+      bucket.isOneThing
+        ? [
+            "border-2",
+            isOver
+              ? isAtCapacity
+                ? "border-red-500 ring-4 ring-red-500/10 shadow-lg"
+                : "border-gray-900 ring-4 ring-gray-900/10 shadow-lg"
+              : "border-gray-900",
+          ]
+        : [
+            "border",
+            isOver
+              ? isAtCapacity
+                ? "border-red-400 ring-4 ring-red-400/10 shadow-lg bg-red-50/50"
+                : "border-blue-400 ring-4 ring-blue-400/10 shadow-lg bg-blue-50/50"
+              : "border-gray-200",
+          ]
+    );
   };
 
   const getHeaderClass = () => {
-    if (bucket.isOneThing) {
-      return "flex items-center justify-between px-5 py-4 cursor-pointer select-none transition-colors bg-gray-900 text-white hover:bg-gray-800 border-b border-gray-700";
-    }
-    return "flex items-center justify-between px-5 py-3 cursor-pointer select-none transition-colors hover:bg-gray-50 border-b border-gray-200";
+    return cn(
+      "flex items-center justify-between cursor-pointer select-none transition-colors border-b",
+      bucket.isOneThing
+        ? "px-5 py-4 bg-gray-900 text-white hover:bg-gray-800 border-gray-700"
+        : "px-5 py-3 hover:bg-gray-50 border-gray-200"
+    );
   };
 
   const getChevronClass = () => {
-    const baseClass = "text-base leading-none transition-transform";
-    const colorClass = bucket.isOneThing ? "text-white/70" : "text-gray-400";
-    const rotationClass = isCollapsed ? "-rotate-90" : "";
-    return `${baseClass} ${colorClass} ${rotationClass}`;
+    return cn(
+      "text-base leading-none transition-transform",
+      bucket.isOneThing ? "text-white/70" : "text-gray-400",
+      isCollapsed && "-rotate-90"
+    );
   };
 
   const getCountClass = () => {
@@ -63,10 +102,12 @@ export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
   };
 
   const getMenuClass = () => {
-    if (bucket.isOneThing) {
-      return "text-xl leading-none cursor-pointer p-1 text-white/70 hover:text-white";
-    }
-    return "text-xl leading-none cursor-pointer p-1 text-gray-400 hover:text-gray-600";
+    return cn(
+      "text-xl leading-none cursor-pointer p-1",
+      bucket.isOneThing
+        ? "text-white/70 hover:text-white"
+        : "text-gray-400 hover:text-gray-600"
+    );
   };
 
   return (

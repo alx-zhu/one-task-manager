@@ -4,6 +4,11 @@ import { mockBuckets, mockTasks } from "@/data/mockData";
 import {
   DndContext,
   DragOverlay,
+  MouseSensor,
+  pointerWithin,
+  TouchSensor,
+  useSensor,
+  useSensors,
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
@@ -11,11 +16,26 @@ import { TaskRowPreview } from "./components/task-table/TaskRowPreview";
 import type { Bucket, Task } from "./types/task";
 import { hydrateBucketsWithTasks } from "./lib/utils";
 import { arrayMove } from "@dnd-kit/sortable";
+import type { DragDataType } from "./types/dnd";
 
 function App() {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [buckets] = useState<Bucket[]>(mockBuckets);
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    })
+  );
 
   const canMoveTaskToBucket = (
     taskId: string,
@@ -164,11 +184,11 @@ function App() {
       return;
     }
 
-    const overData = over.data.current;
+    const overData = over.data.current as DragDataType;
 
     // Case 1: Dropped on another task
     if (overData?.type === "task") {
-      const targetTask = overData.task as Task;
+      const targetTask = overData.task;
 
       const sourceBucketId = draggedTask.bucketId;
       const targetBucketId = targetTask.bucketId;
@@ -191,7 +211,7 @@ function App() {
 
     // Case 2: Dropped on bucket (add to end)
     if (overData?.type === "bucket") {
-      const targetBucket = overData.bucket as Bucket;
+      const targetBucket = overData.bucket;
       const sourceBucketId = draggedTask.bucketId;
       const targetBucketId = targetBucket.id;
 
@@ -258,9 +278,11 @@ function App() {
 
         {/* Buckets */}
         <DndContext
+          sensors={sensors}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           onDragCancel={handleDragCancel}
+          collisionDetection={pointerWithin}
         >
           <div>
             {hydratedBuckets.map((bucket) => (
@@ -272,8 +294,17 @@ function App() {
             ))}
           </div>
 
-          <DragOverlay>
-            {draggedTask ? <TaskRowPreview task={draggedTask} /> : null}
+          <DragOverlay
+            dropAnimation={{
+              duration: 250,
+              easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)", // Bounce easing
+            }}
+          >
+            {draggedTask ? (
+              <div className="scale-105 shadow-2xl">
+                <TaskRowPreview task={draggedTask} />
+              </div>
+            ) : null}
           </DragOverlay>
         </DndContext>
       </div>

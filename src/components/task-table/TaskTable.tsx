@@ -24,6 +24,8 @@ export function TaskTable({ data, columns, onAddTask }: TaskTableProps) {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const isEmpty = data.length === 0;
+
   return (
     <div className="task-table">
       {/* Table Header */}
@@ -59,11 +61,17 @@ export function TaskTable({ data, columns, onAddTask }: TaskTableProps) {
         items={table.getRowModel().rows.map((row) => row.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div>
-          {table.getRowModel().rows.map((row) => (
-            <TaskRow key={row.id} row={row} />
-          ))}
-        </div>
+        {isEmpty ? (
+          <div className="p-8 text-center text-gray-400 text-sm border-2 border-dashed border-gray-200 m-4 rounded-lg">
+            Drop tasks here
+          </div>
+        ) : (
+          <div>
+            {table.getRowModel().rows.map((row) => (
+              <TaskRow key={row.id} row={row} />
+            ))}
+          </div>
+        )}
       </SortableContext>
 
       {/* Add Task Row */}
