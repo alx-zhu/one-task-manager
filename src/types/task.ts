@@ -1,5 +1,9 @@
-export type TaskStatus = 'not-started' | 'in-progress' | 'blocked' | 'completed';
-export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskStatus =
+  | "not-started"
+  | "in-progress"
+  | "blocked"
+  | "completed";
+export type TaskPriority = "low" | "medium" | "high" | "urgent";
 
 export interface Task {
   id: string;
@@ -9,6 +13,12 @@ export interface Task {
   priority: TaskPriority;
   dueDate?: Date;
   tags: string[];
+
+  // Database relationships
+  bucketId: string;
+  orderInBucket: number;
+  userId: string;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,4 +31,8 @@ export interface Bucket {
   tasks: Task[];
   collapsed: boolean;
   isOneThing?: boolean;
+
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
