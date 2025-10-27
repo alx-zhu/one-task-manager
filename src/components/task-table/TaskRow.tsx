@@ -4,6 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "@/types/task";
 import { cn } from "@/lib/utils";
 import type { TaskDragDataType } from "@/types/dnd";
+import { useEffect, useState } from "react";
 
 interface TaskRowProps {
   row: Row<Task>;
@@ -11,6 +12,9 @@ interface TaskRowProps {
 }
 
 const TaskRow = ({ row, isPreview = false }: TaskRowProps) => {
+  const [insertPosition, setInsertPosition] = useState<
+    "above" | "below" | null
+  >(null);
   const {
     attributes,
     listeners,
@@ -19,6 +23,7 @@ const TaskRow = ({ row, isPreview = false }: TaskRowProps) => {
     transition,
     isDragging,
     isOver,
+    active,
   } = useSortable({
     id: row.original.id,
     data: {
@@ -27,6 +32,31 @@ const TaskRow = ({ row, isPreview = false }: TaskRowProps) => {
     } satisfies TaskDragDataType,
     disabled: isPreview,
   });
+
+  const activeData = active?.data?.current as TaskDragDataType;
+
+  useEffect(() => {
+    // If dragging or not hovering over this row, there should be no insert position border
+    if (!isOver || isDragging) {
+      setInsertPosition(null);
+      return;
+    }
+
+    const draggedTask = activeData?.task;
+    const currentTask = row.original;
+    if (!draggedTask) return;
+
+    if (draggedTask.bucketId !== currentTask.bucketId) {
+      setInsertPosition("above");
+      return;
+    }
+
+    if (draggedTask.orderInBucket < currentTask.orderInBucket) {
+      setInsertPosition("below");
+    } else {
+      setInsertPosition("above");
+    }
+  }, [isOver, isDragging, activeData, row.original]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -37,7 +67,8 @@ const TaskRow = ({ row, isPreview = false }: TaskRowProps) => {
   const rowClasses = cn(
     "flex border-b border-gray-100 transition-all duration-150",
     !isPreview && "hover:bg-gray-50",
-    isOver && !isDragging && "border-t-2 border-t-blue-500"
+    insertPosition === "above" && "border-t-2 border-t-blue-500",
+    insertPosition === "below" && "border-b-2 border-b-blue-500"
   );
 
   return (

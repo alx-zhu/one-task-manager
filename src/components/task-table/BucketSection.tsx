@@ -27,11 +27,12 @@ export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
   });
 
   const activeData = active?.data?.current as TaskDragDataType;
+  const draggedTask = activeData?.task;
   const isAtCapacity =
-    activeData?.task &&
+    draggedTask &&
     bucket.limit &&
     bucket.tasks.length >= bucket.limit &&
-    activeData.task.bucketId !== bucket.id;
+    draggedTask.bucketId !== bucket.id;
 
   const overData = over?.data?.current as DragDataType;
   const isOver =
@@ -145,11 +146,29 @@ export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <TaskTable
-              data={bucket.tasks}
-              columns={taskColumns}
-              onAddTask={onAddTask}
-            />
+            <div
+              className={cn(
+                isOver &&
+                  overData?.type === "bucket" &&
+                  // Don't add border if it is the same bucket as the draggedTask
+                  overData.bucket.id !== draggedTask?.bucketId &&
+                  "border-b-2 border-b-blue-500"
+              )}
+            >
+              <TaskTable data={bucket.tasks} columns={taskColumns} />
+            </div>
+            {/* Add Task Row */}
+            {onAddTask && (
+              <div className="flex p-2 border-t border-gray-100">
+                <button
+                  onClick={onAddTask}
+                  className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 px-2 py-1.5 rounded transition-colors hover:bg-gray-50"
+                >
+                  <span>+</span>
+                  <span>Add task</span>
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

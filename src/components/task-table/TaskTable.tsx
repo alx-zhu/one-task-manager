@@ -14,10 +14,10 @@ import {
 interface TaskTableProps {
   data: Task[];
   columns: ColumnDef<Task>[];
-  onAddTask?: () => void;
 }
 
-export function TaskTable({ data, columns, onAddTask }: TaskTableProps) {
+// Keep TaskTable only responsible for rendering the table structure
+export function TaskTable({ data, columns }: TaskTableProps) {
   const table = useReactTable({
     data,
     columns,
@@ -27,7 +27,7 @@ export function TaskTable({ data, columns, onAddTask }: TaskTableProps) {
   const isEmpty = data.length === 0;
 
   return (
-    <div className="task-table">
+    <>
       {/* Table Header */}
       <div className="flex bg-gray-50 border-b border-gray-200">
         {table.getHeaderGroups().map((headerGroup) =>
@@ -73,19 +73,6 @@ export function TaskTable({ data, columns, onAddTask }: TaskTableProps) {
           </div>
         )}
       </SortableContext>
-
-      {/* Add Task Row */}
-      {onAddTask && (
-        <div className="flex p-2 border-t border-gray-100">
-          <button
-            onClick={onAddTask}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 px-2 py-1.5 rounded transition-colors hover:bg-gray-50"
-          >
-            <span>+</span>
-            <span>Add task</span>
-          </button>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
