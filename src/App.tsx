@@ -245,6 +245,23 @@ function App() {
     setDraggedTask(null);
   };
 
+  const handleAddTask = (
+    newTask: Omit<Task, "id" | "createdAt" | "updatedAt">
+  ) => {
+    // Generate a unique ID (in production, this would come from the backend)
+    const id = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    const task: Task = {
+      ...newTask,
+      id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    setTasks((prevTasks) => [...prevTasks, task]);
+    console.log("Added new task:", task);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
@@ -289,7 +306,7 @@ function App() {
               <BucketSection
                 key={bucket.id}
                 bucket={bucket}
-                onAddTask={() => console.log(`Add task to ${bucket.name}`)}
+                onAddTask={handleAddTask}
               />
             ))}
           </div>

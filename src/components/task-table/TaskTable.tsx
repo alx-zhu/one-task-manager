@@ -10,14 +10,26 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import CreateTaskRow from "./CreateTaskRow";
 
 interface TaskTableProps {
   data: Task[];
   columns: ColumnDef<Task>[];
+  bucketId?: string;
+  isAddingTask?: boolean;
+  onSaveNewTask?: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => void;
+  onCancelAddTask?: () => void;
 }
 
 // Keep TaskTable only responsible for rendering the table structure
-export function TaskTable({ data, columns }: TaskTableProps) {
+export function TaskTable({
+  data,
+  columns,
+  bucketId,
+  isAddingTask,
+  onSaveNewTask,
+  onCancelAddTask,
+}: TaskTableProps) {
   const table = useReactTable({
     data,
     columns,
@@ -61,7 +73,7 @@ export function TaskTable({ data, columns }: TaskTableProps) {
         items={table.getRowModel().rows.map((row) => row.id)}
         strategy={verticalListSortingStrategy}
       >
-        {isEmpty ? (
+        {isEmpty && !isAddingTask ? (
           <div className="p-8 text-center text-gray-400 text-sm border-2 border-dashed border-gray-200 m-4 rounded-lg">
             Drop tasks here
           </div>
@@ -70,6 +82,14 @@ export function TaskTable({ data, columns }: TaskTableProps) {
             {table.getRowModel().rows.map((row) => (
               <TaskRow key={row.id} row={row} />
             ))}
+            {isAddingTask && bucketId && onSaveNewTask && onCancelAddTask && (
+              <CreateTaskRow
+                bucketId={bucketId}
+                orderInBucket={data.length}
+                onSave={onSaveNewTask}
+                onCancel={onCancelAddTask}
+              />
+            )}
           </div>
         )}
       </SortableContext>

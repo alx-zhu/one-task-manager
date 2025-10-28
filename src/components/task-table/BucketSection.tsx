@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Bucket } from "@/types/task";
+import type { Bucket, Task } from "@/types/task";
 import { TaskTable } from "./TaskTable";
 import { taskColumns } from "./columns";
 import { AnimatePresence, motion } from "framer-motion";
@@ -13,11 +13,12 @@ import type {
 
 interface BucketSectionProps {
   bucket: Bucket;
-  onAddTask?: () => void;
+  onAddTask?: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => void;
 }
 
 export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(bucket.collapsed);
+  const [isAddingTask, setIsAddingTask] = useState(false);
 
   const { active, over } = useDndContext();
 
@@ -111,6 +112,30 @@ export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
     );
   };
 
+  const handleAddTaskClick = () => {
+    // Check if bucket is at capacity
+    if (bucket.limit && bucket.tasks.length >= bucket.limit) {
+      console.warn(`Bucket "${bucket.name}" is at capacity`);
+      return;
+    }
+    setIsAddingTask(true);
+  };
+
+  const handleSaveNewTask = (
+    task: Omit<Task, "id" | "createdAt" | "updatedAt">
+  ) => {
+    if (onAddTask) {
+      onAddTask(task);
+    }
+    setIsAddingTask(false);
+  };
+
+  const handleCancelAddTask = () => {
+    setIsAddingTask(false);
+  };
+
+  const canAddTask = !bucket.limit || bucket.tasks.length < bucket.limit;
+
   return (
     <div ref={setNodeRef} className={getContainerClass()}>
       {/* Bucket Header */}
@@ -155,17 +180,34 @@ export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
                   "border-b-2 border-b-blue-500"
               )}
             >
-              <TaskTable data={bucket.tasks} columns={taskColumns} />
+              <TaskTable
+                data={bucket.tasks}
+                columns={taskColumns}
+                bucketId={bucket.id}
+                isAddingTask={isAddingTask}
+                onSaveNewTask={handleSaveNewTask}
+                onCancelAddTask={handleCancelAddTask}
+              />
             </div>
             {/* Add Task Row */}
-            {onAddTask && (
+            {onAddTask && !isAddingTask && (
               <div className="flex p-2 border-t border-gray-100">
                 <button
-                  onClick={onAddTask}
-                  className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 px-2 py-1.5 rounded transition-colors hover:bg-gray-50"
+                  onClick={handleAddTaskClick}
+                  disabled={!canAddTask}
+                  className={cn(
+                    "flex items-center gap-2 text-sm px-2 py-1.5 rounded transition-colors",
+                    canAddTask
+                      ? "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                      : "text-gray-300 cursor-not-allowed"
+                  )}
                 >
-                  <span>+</span>
-                  <span>Add task</span>
+                  {canAddTask && <span>+</span>}
+                  <span>
+                    {canAddTask
+                      ? "Add task"
+                      : `Limit reached (${bucket.tasks.length}/${bucket.limit})`}
+                  </span>
                 </button>
               </div>
             )}
