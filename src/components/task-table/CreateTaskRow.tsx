@@ -10,6 +10,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Check, X } from "lucide-react";
+import {
+  statusStyles,
+  statusHoverStyles,
+  statusLabels,
+  priorityStyles,
+  priorityHoverStyles,
+  priorityLabels,
+  badgeBaseClasses,
+} from "./cells/badgeStyles";
 
 interface CreateTaskRowProps {
   bucketId: string;
@@ -148,14 +157,21 @@ const CreateTaskRow = ({
           value={status}
           onValueChange={(value: string) => setStatus(value as TaskStatus)}
         >
-          <SelectTrigger className="text-xs h-7">
+          <SelectTrigger
+            className={`h-7 border-none shadow-none ${badgeBaseClasses} ${statusStyles[status]} ${statusHoverStyles[status]} transition-colors`}
+          >
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="not-started">Not Started</SelectItem>
-            <SelectItem value="in-progress">In Progress</SelectItem>
-            <SelectItem value="blocked">Blocked</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
+          <SelectContent className="p-1.5">
+            {(Object.keys(statusStyles) as TaskStatus[]).map((statusKey) => (
+              <SelectItem
+                key={statusKey}
+                value={statusKey}
+                className={`${badgeBaseClasses} ${statusStyles[statusKey]} ${statusHoverStyles[statusKey]} transition-colors cursor-pointer rounded mb-1 last:mb-0`}
+              >
+                {statusLabels[statusKey]}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -169,14 +185,23 @@ const CreateTaskRow = ({
           value={priority}
           onValueChange={(value: string) => setPriority(value as TaskPriority)}
         >
-          <SelectTrigger className="text-xs h-7">
+          <SelectTrigger
+            className={`h-7 border-none shadow-none ${badgeBaseClasses} ${priorityStyles[priority]} ${priorityHoverStyles[priority]} transition-colors`}
+          >
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="urgent">Urgent</SelectItem>
+          <SelectContent className="p-1.5">
+            {(Object.keys(priorityStyles) as TaskPriority[]).map(
+              (priorityKey) => (
+                <SelectItem
+                  key={priorityKey}
+                  value={priorityKey}
+                  className={`${priorityStyles[priorityKey]} ${priorityHoverStyles[priorityKey]} transition-colors cursor-pointer rounded mb-1 last:mb-0`}
+                >
+                  {priorityLabels[priorityKey]}
+                </SelectItem>
+              )
+            )}
           </SelectContent>
         </Select>
       </div>
