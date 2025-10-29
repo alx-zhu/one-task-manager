@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BucketSection } from "@/components/task-table";
+import { BucketSection } from "@/components/TaskTable";
 import { mockBuckets, mockTasks } from "@/data/mockData";
 import {
   DndContext,
@@ -12,8 +12,8 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { TaskRowPreview } from "./components/task-table/TaskRowPreview";
-import type { Bucket, Task } from "./types/task";
+import { TaskRowPreview } from "./components/TaskTable/TaskRow/TaskPreviewRow";
+import type { Bucket, EditedTask, NewTask, Task } from "./types/task";
 import { hydrateBucketsWithTasks } from "./lib/utils";
 import { arrayMove } from "@dnd-kit/sortable";
 import type { DragDataType } from "./types/dnd";
@@ -245,21 +245,28 @@ function App() {
     setDraggedTask(null);
   };
 
-  const handleAddTask = (
-    newTask: Omit<Task, "id" | "createdAt" | "updatedAt">
-  ) => {
+  const handleCreateTask = (newTask: NewTask) => {
     // Generate a unique ID (in production, this would come from the backend)
     const id = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     const task: Task = {
       ...newTask,
       id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
 
     setTasks((prevTasks) => [...prevTasks, task]);
     console.log("Added new task:", task);
+  };
+
+  const handleUpdateTask = (editedTask: EditedTask) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === editedTask.id
+          ? { ...task, ...editedTask, updatedAt: new Date() }
+          : task
+      )
+    );
+    console.log("Updated task:", editedTask);
   };
 
   return (
@@ -306,7 +313,8 @@ function App() {
               <BucketSection
                 key={bucket.id}
                 bucket={bucket}
-                onAddTask={handleAddTask}
+                onCreateTask={handleCreateTask}
+                onUpdateTask={handleUpdateTask}
               />
             ))}
           </div>

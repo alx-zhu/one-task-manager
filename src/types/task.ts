@@ -23,6 +23,10 @@ export interface Task {
   updatedAt: Date;
 }
 
+export type NewTask = Omit<Task, "id">;
+
+export type EditedTask = Partial<Task>;
+
 export interface Bucket {
   id: string;
   name: string;

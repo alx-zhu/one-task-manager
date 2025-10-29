@@ -6,12 +6,17 @@ import { cn } from "@/lib/utils";
 import type { TaskDragDataType } from "@/types/dnd";
 import { useEffect, useState } from "react";
 
-interface TaskRowProps {
+interface TaskDisplayRowProps {
   row: Row<Task>;
   isPreview?: boolean;
+  onDoubleClick?: (e: React.MouseEvent) => void;
 }
 
-const TaskRow = ({ row, isPreview = false }: TaskRowProps) => {
+const TaskDisplayRow = ({
+  row,
+  isPreview = false,
+  onDoubleClick,
+}: TaskDisplayRowProps) => {
   const [insertPosition, setInsertPosition] = useState<
     "above" | "below" | null
   >(null);
@@ -72,7 +77,16 @@ const TaskRow = ({ row, isPreview = false }: TaskRowProps) => {
   );
 
   return (
-    <div key={row.id} style={style} ref={setNodeRef} className={rowClasses}>
+    <div
+      key={row.id}
+      style={style}
+      ref={setNodeRef}
+      className={rowClasses}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        onDoubleClick?.(e);
+      }}
+    >
       {row.getVisibleCells().map((cell) => {
         const size = cell.column.columnDef.size;
         const isTaskColumn = cell.column.id === "task";
@@ -100,4 +114,4 @@ const TaskRow = ({ row, isPreview = false }: TaskRowProps) => {
   );
 };
 
-export default TaskRow;
+export default TaskDisplayRow;

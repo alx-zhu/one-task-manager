@@ -1,7 +1,7 @@
 import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
-import { taskColumns } from "./columns";
+import { taskColumns } from "../columns";
 import type { Task } from "@/types/task";
-import TaskRow from "./TaskRow";
+import TaskDisplayRow from "./TaskDisplayRow";
 
 interface TaskRowPreviewProps {
   task: Task;
@@ -18,5 +18,5 @@ export function TaskRowPreview({ task }: TaskRowPreviewProps) {
 
   if (!row) return null;
 
-  return <TaskRow row={row} isPreview />;
+  return <TaskDisplayRow row={row} isPreview />;
 }

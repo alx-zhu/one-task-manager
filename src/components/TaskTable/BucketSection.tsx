@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Bucket, Task } from "@/types/task";
+import type { Bucket, EditedTask, NewTask } from "@/types/task";
 import { TaskTable } from "./TaskTable";
 import { taskColumns } from "./columns";
 import { AnimatePresence, motion } from "framer-motion";
@@ -13,10 +13,15 @@ import type {
 
 interface BucketSectionProps {
   bucket: Bucket;
-  onAddTask?: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => void;
+  onCreateTask: (task: NewTask) => void;
+  onUpdateTask: (task: EditedTask) => void;
 }
 
-export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
+export function BucketSection({
+  bucket,
+  onCreateTask,
+  onUpdateTask,
+}: BucketSectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(bucket.collapsed);
   const [isAddingTask, setIsAddingTask] = useState(false);
 
@@ -121,13 +126,23 @@ export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
     setIsAddingTask(true);
   };
 
-  const handleSaveNewTask = (
-    task: Omit<Task, "id" | "createdAt" | "updatedAt">
-  ) => {
-    if (onAddTask) {
-      onAddTask(task);
+  const handleSaveNewTask = (task: NewTask) => {
+    if (onCreateTask) {
+      onCreateTask(task);
     }
     setIsAddingTask(false);
+  };
+
+  const handleSaveEditTask = (task: EditedTask) => {
+    if (onUpdateTask) {
+      onUpdateTask(task);
+    }
+  };
+
+  const handleUpdateTask = (taskId: string, updatedTask: EditedTask) => {
+    if (onUpdateTask) {
+      onUpdateTask({ ...updatedTask, id: taskId });
+    }
   };
 
   const handleCancelAddTask = () => {
@@ -186,11 +201,13 @@ export function BucketSection({ bucket, onAddTask }: BucketSectionProps) {
                 bucketId={bucket.id}
                 isAddingTask={isAddingTask}
                 onSaveNewTask={handleSaveNewTask}
+                onSaveEditTask={handleSaveEditTask}
+                onUpdateTask={handleUpdateTask}
                 onCancelAddTask={handleCancelAddTask}
               />
             </div>
             {/* Add Task Row */}
-            {onAddTask && !isAddingTask && (
+            {!isAddingTask && (
               <div className="flex p-2 border-t border-gray-100">
                 <button
                   onClick={handleAddTaskClick}

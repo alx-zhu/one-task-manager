@@ -4,21 +4,23 @@ import {
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-import type { Task } from "@/types/task";
-import TaskRow from "./TaskRow";
+import type { EditedTask, NewTask, Task } from "@/types/task";
+import TaskRow from "./TaskRow/TaskRow";
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import CreateTaskRow from "./CreateTaskRow";
+import TaskEditRow from "./TaskRow/TaskEditRow";
 
 interface TaskTableProps {
   data: Task[];
   columns: ColumnDef<Task>[];
   bucketId?: string;
   isAddingTask?: boolean;
-  onSaveNewTask?: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => void;
-  onCancelAddTask?: () => void;
+  onSaveNewTask: (task: NewTask) => void;
+  onSaveEditTask: (task: EditedTask) => void;
+  onUpdateTask: (taskId: string, updatedTask: EditedTask) => void;
+  onCancelAddTask: () => void;
 }
 
 // Keep TaskTable only responsible for rendering the table structure
@@ -28,6 +30,8 @@ export function TaskTable({
   bucketId,
   isAddingTask,
   onSaveNewTask,
+  onSaveEditTask,
+  onUpdateTask,
   onCancelAddTask,
 }: TaskTableProps) {
   const table = useReactTable({
@@ -37,6 +41,14 @@ export function TaskTable({
   });
 
   const isEmpty = data.length === 0;
+
+  const handleSaveNewTask = (task: Omit<NewTask, "orderInBucket">) => {
+    const newTaskWithOrder: NewTask = {
+      ...task,
+      orderInBucket: data.length,
+    };
+    onSaveNewTask(newTaskWithOrder);
+  };
 
   return (
     <>
@@ -80,13 +92,13 @@ export function TaskTable({
         ) : (
           <div>
             {table.getRowModel().rows.map((row) => (
-              <TaskRow key={row.id} row={row} />
+              <TaskRow key={row.id} row={row} onUpdateTask={onUpdateTask} />
             ))}
-            {isAddingTask && bucketId && onSaveNewTask && onCancelAddTask && (
-              <CreateTaskRow
+            {isAddingTask && bucketId && (
+              <TaskEditRow
                 bucketId={bucketId}
-                orderInBucket={data.length}
-                onSave={onSaveNewTask}
+                onSaveNewTask={handleSaveNewTask}
+                onSaveEditTask={onSaveEditTask}
                 onCancel={onCancelAddTask}
               />
             )}

@@ -1,5 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import type { Task, TaskStatus, TaskPriority } from "@/types/task";
+import type {
+  Task,
+  TaskStatus,
+  TaskPriority,
+  NewTask,
+  EditedTask,
+} from "@/types/task";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,42 +24,52 @@ import {
   priorityHoverStyles,
   priorityLabels,
   badgeBaseClasses,
-} from "./cells/badgeStyles";
+} from "../cells/badgeStyles";
 
-interface CreateTaskRowProps {
+interface TaskEditRowProps {
   bucketId: string;
-  orderInBucket: number;
-  onSave: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => void;
+  onSaveNewTask?: (task: Omit<NewTask, "orderInBucket">) => void;
+  onSaveEditTask?: (task: EditedTask) => void;
   onCancel: () => void;
+  existingTask?: Task;
 }
 
-const CreateTaskRow = ({
+const TaskEditRow = ({
   bucketId,
-  orderInBucket,
-  onSave,
+  onSaveNewTask,
+  onSaveEditTask,
   onCancel,
-}: CreateTaskRowProps) => {
+  existingTask,
+}: TaskEditRowProps) => {
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<TaskStatus>("not-started");
-  const [priority, setPriority] = useState<TaskPriority>("medium");
-  const [dueDate, setDueDate] = useState("");
-  const [tags, setTags] = useState("");
+  const [title, setTitle] = useState<string>(existingTask?.title || "");
+  const [description, setDescription] = useState<string>(
+    existingTask?.description || ""
+  );
+  const [status, setStatus] = useState<TaskStatus>(
+    existingTask?.status || "not-started"
+  );
+  const [priority, setPriority] = useState<TaskPriority>(
+    existingTask?.priority || "medium"
+  );
+  const [dueDate, setDueDate] = useState<string>(
+    existingTask?.dueDate?.toDateString() || ""
+  );
+  const [tags, setTags] = useState<string>(existingTask?.tags.join(", ") || "");
   const [showError, setShowError] = useState(false);
 
   useEffect(() => {
     titleInputRef.current?.focus();
   }, []);
 
-  const handleSave = () => {
+  const handleSaveNewTask = () => {
     if (!title.trim()) {
       setShowError(true);
       titleInputRef.current?.focus();
       return;
     }
 
-    const newTask: Omit<Task, "id" | "createdAt" | "updatedAt"> = {
+    const newTask: Omit<Task, "id" | "orderInBucket"> = {
       title: title.trim(),
       description: description.trim() || undefined,
       status,
@@ -64,11 +80,44 @@ const CreateTaskRow = ({
         .map((tag) => tag.trim())
         .filter(Boolean),
       bucketId,
-      orderInBucket,
       userId: "user-1", // TODO: Replace with actual user ID
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
-    onSave(newTask);
+    onSaveNewTask?.(newTask);
+  };
+
+  const handleSaveEditTask = () => {
+    if (!title.trim()) {
+      setShowError(true);
+      titleInputRef.current?.focus();
+      return;
+    }
+
+    const updatedTask: EditedTask = {
+      ...existingTask,
+      title: title.trim(),
+      description: description.trim() || undefined,
+      status,
+      priority,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      tags: tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+      updatedAt: new Date(),
+    };
+
+    onSaveEditTask?.(updatedTask);
+  };
+
+  const handleSave = () => {
+    if (existingTask) {
+      handleSaveEditTask();
+    } else {
+      handleSaveNewTask();
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -242,4 +291,4 @@ const CreateTaskRow = ({
   );
 };
 
-export default CreateTaskRow;
+export default TaskEditRow;
