@@ -25,7 +25,6 @@ const TaskDisplayRow = ({
   const [insertPosition, setInsertPosition] = useState<
     "above" | "below" | null
   >(null);
-  const [isHovered, setIsHovered] = useState(false);
   const {
     attributes,
     listeners,
@@ -76,7 +75,7 @@ const TaskDisplayRow = ({
   };
 
   const rowClasses = cn(
-    "flex border-b border-gray-100 transition-all duration-150 relative",
+    "flex border-b border-gray-100 transition-all duration-150 relative group",
     !isPreview && "hover:bg-gray-50",
     insertPosition === "above" && "border-t-2 border-t-blue-500",
     insertPosition === "below" && "border-b-2 border-b-blue-500"
@@ -98,8 +97,6 @@ const TaskDisplayRow = ({
       style={style}
       ref={setNodeRef}
       className={rowClasses}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={(e) => {
         e.stopPropagation();
         onClick?.(e);
@@ -130,8 +127,8 @@ const TaskDisplayRow = ({
       })}
 
       {/* Hover overlay with action buttons */}
-      {isHovered && !isPreview && !isDragging && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center p-1 gap-1 bg-white/70 backdrop-blur-md rounded shadow-sm">
+      {!isPreview && !isDragging && (
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute right-2 top-1/2 -translate-y-1/2 flex items-center p-1 gap-1 bg-white/70 backdrop-blur-md rounded shadow-sm">
           <button
             onClick={handleDelete}
             className="relative z-10 p-1.5 rounded hover:bg-red-100 text-gray-500 hover:text-red-600 transition-colors"
