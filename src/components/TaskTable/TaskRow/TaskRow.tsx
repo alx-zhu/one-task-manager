@@ -8,15 +8,17 @@ interface TaskRowProps {
   row: Row<Task>;
   isPreview?: boolean;
   onUpdateTask: (taskId: string, updatedTask: EditedTask) => void;
-  // onDeleteTask: (taskId: string) => void;
+  onDeleteTask?: (taskId: string) => void;
+  onMoreOptions?: (taskId: string) => void;
 }
 
 const TaskRow = ({
   row,
   isPreview = false,
   onUpdateTask,
-}: // onDeleteTask,
-TaskRowProps) => {
+  onDeleteTask,
+  onMoreOptions,
+}: TaskRowProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
   // Don't want preview row to be editable
@@ -48,7 +50,12 @@ TaskRowProps) => {
       onCancel={() => setIsEditing(false)}
     />
   ) : (
-    <TaskDisplayRow row={row} onDoubleClick={handleDoubleClick} />
+    <TaskDisplayRow
+      row={row}
+      onDoubleClick={handleDoubleClick}
+      onDelete={onDeleteTask}
+      onMoreOptions={onMoreOptions}
+    />
   );
 };
 

@@ -15,12 +15,14 @@ interface BucketSectionProps {
   bucket: Bucket;
   onCreateTask: (task: NewTask) => void;
   onUpdateTask: (task: EditedTask) => void;
+  onDeleteTask?: (taskId: string) => void;
 }
 
 export function BucketSection({
   bucket,
   onCreateTask,
   onUpdateTask,
+  onDeleteTask,
 }: BucketSectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(bucket.collapsed);
   const [isAddingTask, setIsAddingTask] = useState(false);
@@ -145,6 +147,15 @@ export function BucketSection({
     }
   };
 
+  const handleDeleteTask = (taskId: string) => {
+    onDeleteTask?.(taskId);
+  };
+
+  const handleMoreOptions = (taskId: string) => {
+    console.log("More options for task:", taskId);
+    // You can implement a modal or dropdown menu here
+  };
+
   const handleCancelAddTask = () => {
     setIsAddingTask(false);
   };
@@ -204,6 +215,8 @@ export function BucketSection({
                 onSaveEditTask={handleSaveEditTask}
                 onUpdateTask={handleUpdateTask}
                 onCancelAddTask={handleCancelAddTask}
+                onDeleteTask={handleDeleteTask}
+                onMoreOptions={handleMoreOptions}
               />
             </div>
             {/* Add Task Row */}

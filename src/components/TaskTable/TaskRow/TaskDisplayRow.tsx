@@ -5,21 +5,27 @@ import type { Task } from "@/types/task";
 import { cn } from "@/lib/utils";
 import type { TaskDragDataType } from "@/types/dnd";
 import { useEffect, useState } from "react";
+import { MoreVertical, Trash2 } from "lucide-react";
 
 interface TaskDisplayRowProps {
   row: Row<Task>;
   isPreview?: boolean;
   onDoubleClick?: (e: React.MouseEvent) => void;
+  onDelete?: (taskId: string) => void;
+  onMoreOptions?: (taskId: string) => void;
 }
 
 const TaskDisplayRow = ({
   row,
   isPreview = false,
   onDoubleClick,
+  onDelete,
+  onMoreOptions,
 }: TaskDisplayRowProps) => {
   const [insertPosition, setInsertPosition] = useState<
     "above" | "below" | null
   >(null);
+  const [isHovered, setIsHovered] = useState(false);
   const {
     attributes,
     listeners,
@@ -70,11 +76,21 @@ const TaskDisplayRow = ({
   };
 
   const rowClasses = cn(
-    "flex border-b border-gray-100 transition-all duration-150",
+    "flex border-b border-gray-100 transition-all duration-150 relative",
     !isPreview && "hover:bg-gray-50",
     insertPosition === "above" && "border-t-2 border-t-blue-500",
     insertPosition === "below" && "border-b-2 border-b-blue-500"
   );
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete?.(row.original.id);
+  };
+
+  const handleMoreOptions = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onMoreOptions?.(row.original.id);
+  };
 
   return (
     <div
@@ -82,6 +98,8 @@ const TaskDisplayRow = ({
       style={style}
       ref={setNodeRef}
       className={rowClasses}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onDoubleClick={(e) => {
         e.stopPropagation();
         onDoubleClick?.(e);
@@ -110,6 +128,26 @@ const TaskDisplayRow = ({
           </div>
         );
       })}
+
+      {/* Hover overlay with action buttons */}
+      {isHovered && !isPreview && !isDragging && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center p-1 gap-1 bg-white/70 backdrop-blur-md rounded shadow-sm">
+          <button
+            onClick={handleDelete}
+            className="relative z-10 p-1.5 rounded hover:bg-red-100 text-gray-500 hover:text-red-600 transition-colors"
+            title="Delete task"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={handleMoreOptions}
+            className="relative z-10 p-1.5 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+            title="More options"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
