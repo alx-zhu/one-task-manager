@@ -1,7 +1,6 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import type { Task } from "@/types/task";
 import { DragHandle } from "./cells/DragHandle";
-import { TaskCheckbox } from "./cells/TaskCheckbox";
 import { TaskCell } from "./cells/TaskCell";
 import { StatusBadge } from "./cells/StatusBadge";
 import { PriorityBadge } from "./cells/PriorityBadge";
@@ -14,12 +13,6 @@ export const taskColumns: ColumnDef<Task>[] = [
     header: "",
     size: 40,
     cell: () => <DragHandle />,
-  },
-  {
-    id: "checkbox",
-    header: "",
-    size: 40,
-    cell: ({ row }) => <TaskCheckbox task={row.original} />,
   },
   {
     id: "task",

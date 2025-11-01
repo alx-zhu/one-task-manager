@@ -25,6 +25,7 @@ import {
   priorityLabels,
   badgeBaseClasses,
 } from "../cells/badgeStyles";
+import { format } from "date-fns/format";
 
 interface TaskEditRowProps {
   bucketId: string;
@@ -32,6 +33,7 @@ interface TaskEditRowProps {
   onSaveEditTask?: (task: EditedTask) => void;
   onCancel: () => void;
   existingTask?: Task;
+  focusColumn?: string | null;
 }
 
 const TaskEditRow = ({
@@ -40,8 +42,14 @@ const TaskEditRow = ({
   onSaveEditTask,
   onCancel,
   existingTask,
+  focusColumn = null,
 }: TaskEditRowProps) => {
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const descriptionInputRef = useRef<HTMLInputElement>(null);
+  const statusSelectRef = useRef<HTMLButtonElement>(null);
+  const prioritySelectRef = useRef<HTMLButtonElement>(null);
+  const dueDateInputRef = useRef<HTMLInputElement>(null);
+  const tagsInputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState<string>(existingTask?.title || "");
   const [description, setDescription] = useState<string>(
     existingTask?.description || ""
@@ -53,14 +61,28 @@ const TaskEditRow = ({
     existingTask?.priority || "medium"
   );
   const [dueDate, setDueDate] = useState<string>(
-    existingTask?.dueDate?.toDateString() || ""
+    format(existingTask?.dueDate || "", "yyyy-MM-dd")
   );
   const [tags, setTags] = useState<string>(existingTask?.tags.join(", ") || "");
   const [showError, setShowError] = useState(false);
 
   useEffect(() => {
-    titleInputRef.current?.focus();
-  }, []);
+    // Focus the appropriate field based on which column was clicked
+    if (focusColumn === "task") {
+      titleInputRef.current?.focus();
+    } else if (focusColumn === "status") {
+      statusSelectRef.current?.click();
+    } else if (focusColumn === "priority") {
+      prioritySelectRef.current?.click();
+    } else if (focusColumn === "dueDate") {
+      dueDateInputRef.current?.focus();
+    } else if (focusColumn === "tags") {
+      tagsInputRef.current?.focus();
+    } else {
+      // Default to title if no specific column or drag/checkbox clicked
+      titleInputRef.current?.focus();
+    }
+  }, [focusColumn]);
 
   const handleSaveNewTask = () => {
     if (!title.trim()) {
@@ -186,6 +208,7 @@ const TaskEditRow = ({
           }`}
         />
         <Input
+          ref={descriptionInputRef}
           type="text"
           value={description}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -207,6 +230,7 @@ const TaskEditRow = ({
           onValueChange={(value: string) => setStatus(value as TaskStatus)}
         >
           <SelectTrigger
+            ref={statusSelectRef}
             className={`h-7 border-none shadow-none ${badgeBaseClasses} ${statusStyles[status]} ${statusHoverStyles[status]} transition-colors`}
           >
             <SelectValue />
@@ -235,6 +259,7 @@ const TaskEditRow = ({
           onValueChange={(value: string) => setPriority(value as TaskPriority)}
         >
           <SelectTrigger
+            ref={prioritySelectRef}
             className={`h-7 border-none shadow-none ${badgeBaseClasses} ${priorityStyles[priority]} ${priorityHoverStyles[priority]} transition-colors`}
           >
             <SelectValue />
@@ -261,6 +286,7 @@ const TaskEditRow = ({
         style={{ width: "130px", minWidth: "130px" }}
       >
         <Input
+          ref={dueDateInputRef}
           type="date"
           value={dueDate}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -277,6 +303,7 @@ const TaskEditRow = ({
         style={{ width: "160px", minWidth: "160px" }}
       >
         <Input
+          ref={tagsInputRef}
           type="text"
           value={tags}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>

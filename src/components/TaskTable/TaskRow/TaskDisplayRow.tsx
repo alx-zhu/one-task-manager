@@ -109,6 +109,7 @@ const TaskDisplayRow = ({
         return (
           <div
             key={cell.id}
+            data-column-id={cell.column.id}
             className="px-3 py-2.5 flex items-center border-r border-gray-100 last:border-r-0 min-h-[42px]"
             style={{
               width: size ? `${size}px` : undefined,

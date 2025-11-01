@@ -18,6 +18,7 @@ const TaskRow = ({
   onDeleteTask,
 }: TaskRowProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [focusColumn, setFocusColumn] = useState<string | null>(null);
   const editRowRef = useRef<HTMLDivElement>(null);
 
   // Handle clicking outside to save and keyboard events
@@ -55,13 +56,15 @@ const TaskRow = ({
   const handleClick = (e: React.MouseEvent) => {
     if (!(e.target instanceof HTMLElement)) return;
 
-    if (
-      e.target.closest("[data-drag-handle]") ||
-      e.target.closest("[data-checkbox]")
-    ) {
+    if (e.target.closest("[data-drag-handle]")) {
       return;
     }
 
+    // Find which column was clicked
+    const columnElement = e.target.closest("[data-column-id]");
+    const columnId = columnElement?.getAttribute("data-column-id") || null;
+
+    setFocusColumn(columnId);
     setIsEditing(true);
   };
 
@@ -75,11 +78,16 @@ const TaskRow = ({
       <TaskEditRow
         bucketId={row.original.bucketId}
         existingTask={row.original}
+        focusColumn={focusColumn}
         onSaveEditTask={(updatedTask) => {
           onUpdateTask(row.original.id, updatedTask);
           setIsEditing(false);
+          setFocusColumn(null);
         }}
-        onCancel={() => setIsEditing(false)}
+        onCancel={() => {
+          setIsEditing(false);
+          setFocusColumn(null);
+        }}
       />
     </div>
   ) : (
