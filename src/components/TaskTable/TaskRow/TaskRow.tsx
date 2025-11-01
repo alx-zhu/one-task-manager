@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import TaskEditRow from "./TaskEditRow";
 import TaskDisplayRow from "./TaskDisplayRow";
 import type { Row } from "@tanstack/react-table";
@@ -20,13 +20,41 @@ const TaskRow = ({
   onMoreOptions,
 }: TaskRowProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const editRowRef = useRef<HTMLDivElement>(null);
 
-  // Don't want preview row to be editable
-  if (isPreview) {
-    return <TaskDisplayRow row={row} isPreview />;
-  }
+  // Handle clicking outside to save and keyboard events
+  useEffect(() => {
+    if (!isEditing) return;
 
-  const handleDoubleClick = (e: React.MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        editRowRef.current &&
+        !editRowRef.current.contains(e.target as Node)
+      ) {
+        onUpdateTask(row.original.id, row.original);
+        setIsEditing(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        onUpdateTask(row.original.id, row.original);
+        setIsEditing(false);
+      } else if (e.key === "Escape") {
+        setIsEditing(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isEditing, onUpdateTask, row.original]);
+
+  const handleClick = (e: React.MouseEvent) => {
     if (!(e.target instanceof HTMLElement)) return;
 
     if (
@@ -39,20 +67,27 @@ const TaskRow = ({
     setIsEditing(true);
   };
 
+  // Don't want preview row to be editable
+  if (isPreview) {
+    return <TaskDisplayRow row={row} isPreview />;
+  }
+
   return isEditing ? (
-    <TaskEditRow
-      bucketId={row.original.bucketId}
-      existingTask={row.original}
-      onSaveEditTask={(updatedTask) => {
-        onUpdateTask(row.original.id, updatedTask);
-        setIsEditing(false);
-      }}
-      onCancel={() => setIsEditing(false)}
-    />
+    <div ref={editRowRef}>
+      <TaskEditRow
+        bucketId={row.original.bucketId}
+        existingTask={row.original}
+        onSaveEditTask={(updatedTask) => {
+          onUpdateTask(row.original.id, updatedTask);
+          setIsEditing(false);
+        }}
+        onCancel={() => setIsEditing(false)}
+      />
+    </div>
   ) : (
     <TaskDisplayRow
       row={row}
-      onDoubleClick={handleDoubleClick}
+      onClick={handleClick}
       onDelete={onDeleteTask}
       onMoreOptions={onMoreOptions}
     />

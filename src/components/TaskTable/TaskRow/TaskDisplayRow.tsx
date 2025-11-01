@@ -10,7 +10,7 @@ import { MoreVertical, Trash2 } from "lucide-react";
 interface TaskDisplayRowProps {
   row: Row<Task>;
   isPreview?: boolean;
-  onDoubleClick?: (e: React.MouseEvent) => void;
+  onClick?: (e: React.MouseEvent) => void;
   onDelete?: (taskId: string) => void;
   onMoreOptions?: (taskId: string) => void;
 }
@@ -18,7 +18,7 @@ interface TaskDisplayRowProps {
 const TaskDisplayRow = ({
   row,
   isPreview = false,
-  onDoubleClick,
+  onClick,
   onDelete,
   onMoreOptions,
 }: TaskDisplayRowProps) => {
@@ -100,9 +100,9 @@ const TaskDisplayRow = ({
       className={rowClasses}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onDoubleClick={(e) => {
+      onClick={(e) => {
         e.stopPropagation();
-        onDoubleClick?.(e);
+        onClick?.(e);
       }}
     >
       {row.getVisibleCells().map((cell) => {
