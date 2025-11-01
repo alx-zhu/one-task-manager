@@ -5,14 +5,13 @@ import type { Task } from "@/types/task";
 import { cn } from "@/lib/utils";
 import type { TaskDragDataType } from "@/types/dnd";
 import { useEffect, useState } from "react";
-import { MoreVertical, Trash2 } from "lucide-react";
+import TaskRowActions from "./TaskRowActions";
 
 interface TaskDisplayRowProps {
   row: Row<Task>;
   isPreview?: boolean;
   onClick?: (e: React.MouseEvent) => void;
   onDelete?: (taskId: string) => void;
-  onMoreOptions?: (taskId: string) => void;
 }
 
 const TaskDisplayRow = ({
@@ -20,7 +19,6 @@ const TaskDisplayRow = ({
   isPreview = false,
   onClick,
   onDelete,
-  onMoreOptions,
 }: TaskDisplayRowProps) => {
   const [insertPosition, setInsertPosition] = useState<
     "above" | "below" | null
@@ -81,14 +79,12 @@ const TaskDisplayRow = ({
     insertPosition === "below" && "border-b-2 border-b-blue-500"
   );
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDelete = () => {
     onDelete?.(row.original.id);
   };
 
-  const handleMoreOptions = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onMoreOptions?.(row.original.id);
+  const handleMoreOptions = () => {
+    console.log("More options for task:", row.original.id);
   };
 
   return (
@@ -128,22 +124,10 @@ const TaskDisplayRow = ({
 
       {/* Hover overlay with action buttons */}
       {!isPreview && !isDragging && (
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute right-2 top-1/2 -translate-y-1/2 flex items-center p-1 gap-1 bg-white/70 backdrop-blur-md rounded shadow-sm">
-          <button
-            onClick={handleDelete}
-            className="relative z-10 p-1.5 rounded hover:bg-red-100 text-gray-500 hover:text-red-600 transition-colors"
-            title="Delete task"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleMoreOptions}
-            className="relative z-10 p-1.5 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
-            title="More options"
-          >
-            <MoreVertical className="w-4 h-4" />
-          </button>
-        </div>
+        <TaskRowActions
+          onDelete={handleDelete}
+          onMoreOptions={handleMoreOptions}
+        />
       )}
     </div>
   );

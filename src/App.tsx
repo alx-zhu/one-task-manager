@@ -247,7 +247,7 @@ function App() {
 
   const handleCreateTask = (newTask: NewTask) => {
     // Generate a unique ID (in production, this would come from the backend)
-    const id = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `task-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
     const task: Task = {
       ...newTask,
@@ -267,6 +267,11 @@ function App() {
       )
     );
     console.log("Updated task:", editedTask);
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+    console.log("Deleted task with ID:", taskId);
   };
 
   return (
@@ -315,6 +320,7 @@ function App() {
                 bucket={bucket}
                 onCreateTask={handleCreateTask}
                 onUpdateTask={handleUpdateTask}
+                onDeleteTask={handleDeleteTask}
               />
             ))}
           </div>

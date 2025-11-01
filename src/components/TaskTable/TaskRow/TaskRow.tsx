@@ -9,7 +9,6 @@ interface TaskRowProps {
   isPreview?: boolean;
   onUpdateTask: (taskId: string, updatedTask: EditedTask) => void;
   onDeleteTask?: (taskId: string) => void;
-  onMoreOptions?: (taskId: string) => void;
 }
 
 const TaskRow = ({
@@ -17,7 +16,6 @@ const TaskRow = ({
   isPreview = false,
   onUpdateTask,
   onDeleteTask,
-  onMoreOptions,
 }: TaskRowProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const editRowRef = useRef<HTMLDivElement>(null);
@@ -85,12 +83,7 @@ const TaskRow = ({
       />
     </div>
   ) : (
-    <TaskDisplayRow
-      row={row}
-      onClick={handleClick}
-      onDelete={onDeleteTask}
-      onMoreOptions={onMoreOptions}
-    />
+    <TaskDisplayRow row={row} onClick={handleClick} onDelete={onDeleteTask} />
   );
 };
 

@@ -21,8 +21,7 @@ interface TaskTableProps {
   onSaveEditTask: (task: EditedTask) => void;
   onUpdateTask: (taskId: string, updatedTask: EditedTask) => void;
   onCancelAddTask: () => void;
-  onDeleteTask?: (taskId: string) => void;
-  onMoreOptions?: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
 }
 
 // Keep TaskTable only responsible for rendering the table structure
@@ -36,7 +35,6 @@ export function TaskTable({
   onUpdateTask,
   onCancelAddTask,
   onDeleteTask,
-  onMoreOptions,
 }: TaskTableProps) {
   const table = useReactTable({
     data,
@@ -101,7 +99,6 @@ export function TaskTable({
                 row={row}
                 onUpdateTask={onUpdateTask}
                 onDeleteTask={onDeleteTask}
-                onMoreOptions={onMoreOptions}
               />
             ))}
             {isAddingTask && bucketId && (
