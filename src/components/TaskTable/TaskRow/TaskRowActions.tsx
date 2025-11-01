@@ -47,13 +47,16 @@ const TaskRowActions = ({
             <MoreVertical className="w-4 h-4" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent
+          align="end"
+          className="w-48 p-1.5 border-gray-200 shadow-lg"
+        >
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
+            <DropdownMenuSubTrigger className="rounded px-2 py-1.5 text-sm hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">
               <ArrowRight className="w-4 h-4" />
               <span>Move to</span>
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
+            <DropdownMenuSubContent className="p-1.5 border-gray-200 shadow-lg">
               {buckets
                 .filter((bucket) => bucket.id !== currentBucketId)
                 .map((bucket) => {
@@ -64,14 +67,23 @@ const TaskRowActions = ({
                       key={bucket.id}
                       onClick={(e) => {
                         e.stopPropagation();
-                        onMoveTo?.(bucket.id);
+                        if (!isFull) {
+                          onMoveTo?.(bucket.id);
+                        }
                       }}
                       disabled={isFull}
-                      className={
-                        isFull ? "cursor-not-allowed" : "cursor-pointer"
-                      }
+                      className={`rounded px-2 py-1.5 text-sm transition-colors relative pr-14 ${
+                        isFull
+                          ? "cursor-not-allowed text-gray-400"
+                          : "cursor-pointer hover:bg-gray-100 focus:bg-gray-100"
+                      }`}
                     >
-                      {bucket.name}
+                      <span className="truncate">{bucket.name}</span>
+                      {isFull && (
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700 whitespace-nowrap">
+                          Full
+                        </span>
+                      )}
                     </DropdownMenuItem>
                   );
                 })}
@@ -83,13 +95,13 @@ const TaskRowActions = ({
               e.stopPropagation();
               onDuplicate?.();
             }}
-            className="cursor-pointer"
+            className="rounded px-2 py-1.5 text-sm cursor-pointer hover:bg-gray-100 focus:bg-gray-100 transition-colors"
           >
             <Copy className="w-4 h-4" />
             <span>Duplicate</span>
           </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="my-1 bg-gray-200" />
 
           <DropdownMenuItem
             variant="destructive"
@@ -97,7 +109,7 @@ const TaskRowActions = ({
               e.stopPropagation();
               onDelete?.();
             }}
-            className="cursor-pointer"
+            className="rounded px-2 py-1.5 text-sm cursor-pointer hover:bg-red-50 focus:bg-red-50 text-red-600 hover:text-red-700 transition-colors"
           >
             <Trash2 className="w-4 h-4" />
             <span>Delete</span>
