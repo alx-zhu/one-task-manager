@@ -7,7 +7,6 @@ import type {
   EditedTask,
 } from "@/types/task";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -15,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Check, X } from "lucide-react";
+import ActionsCell from "./ActionsCell";
 import {
   statusStyles,
   statusHoverStyles,
@@ -61,7 +60,7 @@ const TaskEditRow = ({
     existingTask?.priority || "medium"
   );
   const [dueDate, setDueDate] = useState<string>(
-    format(existingTask?.dueDate || "", "yyyy-MM-dd")
+    existingTask?.dueDate ? format(existingTask.dueDate, "yyyy-MM-dd") : ""
   );
   const [tags, setTags] = useState<string>(existingTask?.tags.join(", ") || "");
   const [showError, setShowError] = useState(false);
@@ -158,31 +157,7 @@ const TaskEditRow = ({
       <div
         className="px-3 py-2.5 flex items-center justify-center border-r border-gray-100 min-h-[42px]"
         style={{ width: "40px", minWidth: "40px" }}
-      >
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6"
-          onClick={handleSave}
-        >
-          <Check className="h-4 w-4 text-green-600" />
-        </Button>
-      </div>
-
-      {/* Cancel Button */}
-      <div
-        className="px-3 py-2.5 flex items-center justify-center border-r border-gray-100 min-h-[42px]"
-        style={{ width: "40px", minWidth: "40px" }}
-      >
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6"
-          onClick={onCancel}
-        >
-          <X className="h-4 w-4 text-red-600" />
-        </Button>
-      </div>
+      ></div>
 
       {/* Task Title + Description */}
       <div
@@ -299,7 +274,7 @@ const TaskEditRow = ({
 
       {/* Tags */}
       <div
-        className="px-3 py-2.5 flex items-center min-h-[42px]"
+        className="px-3 py-2.5 flex items-center border-r border-gray-100 min-h-[42px]"
         style={{ width: "160px", minWidth: "160px" }}
       >
         <Input
@@ -313,6 +288,14 @@ const TaskEditRow = ({
           placeholder="tag1, tag2..."
           className="text-xs h-7 w-full"
         />
+      </div>
+
+      {/* Actions */}
+      <div
+        className="px-3 py-2.5 flex items-center justify-center min-h-[42px]"
+        style={{ width: "80px", minWidth: "80px" }}
+      >
+        <ActionsCell mode="edit" onSave={handleSave} onCancel={onCancel} />
       </div>
     </div>
   );

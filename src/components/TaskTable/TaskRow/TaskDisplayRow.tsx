@@ -5,7 +5,7 @@ import type { Task, Bucket } from "@/types/task";
 import { cn } from "@/lib/utils";
 import type { TaskDragDataType } from "@/types/dnd";
 import { useEffect, useState } from "react";
-import TaskRowActions from "./TaskRowActions";
+import ActionsCell from "./ActionsCell";
 
 interface TaskDisplayRowProps {
   row: Row<Task>;
@@ -139,17 +139,23 @@ const TaskDisplayRow = ({
         );
       })}
 
-      {/* Hover overlay with action buttons */}
-      {!isPreview && !isDragging && (
-        <TaskRowActions
-          buckets={buckets}
-          currentBucketId={row.original.bucketId}
-          currentStatus={row.original.status}
-          onDelete={handleDelete}
-          onDuplicate={handleDuplicate}
-          onMoveTo={handleMoveTo}
-          onToggleComplete={handleToggleComplete}
-        />
+      {/* Actions Column */}
+      {!isPreview && (
+        <div
+          className="px-3 py-2.5 flex items-center justify-center min-h-[42px]"
+          style={{ width: "80px", minWidth: "80px" }}
+        >
+          <ActionsCell
+            mode="display"
+            buckets={buckets}
+            currentBucketId={row.original.bucketId}
+            currentStatus={row.original.status}
+            onDelete={handleDelete}
+            onDuplicate={handleDuplicate}
+            onMoveTo={handleMoveTo}
+            onToggleComplete={handleToggleComplete}
+          />
+        </div>
       )}
     </div>
   );

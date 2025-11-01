@@ -1,5 +1,14 @@
-import { MoreVertical, Copy, Trash2, ArrowRight, Check } from "lucide-react";
+import {
+  MoreVertical,
+  Copy,
+  Trash2,
+  ArrowRight,
+  Check,
+  X,
+  Save,
+} from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,35 +22,75 @@ import {
 import type { Bucket, TaskStatus } from "@/types/task";
 import { cn } from "@/lib/utils";
 
-interface TaskRowActionsProps {
-  buckets: Bucket[];
-  currentBucketId: string;
-  currentStatus: TaskStatus;
+interface ActionsCellProps {
+  mode: "display" | "edit";
+  // Display mode props
+  buckets?: Bucket[];
+  currentBucketId?: string;
+  currentStatus?: TaskStatus;
   onDelete?: () => void;
   onDuplicate?: () => void;
   onMoveTo?: (bucketId: string) => void;
   onToggleComplete?: () => void;
+  // Edit mode props
+  onSave?: () => void;
+  onCancel?: () => void;
 }
 
-const TaskRowActions = ({
-  buckets,
-  currentBucketId,
-  currentStatus,
+const ActionsCell = ({
+  mode,
+  buckets = [],
+  currentBucketId = "",
+  currentStatus = "not-started",
   onDelete,
   onDuplicate,
   onMoveTo,
   onToggleComplete,
-}: TaskRowActionsProps) => {
+  onSave,
+  onCancel,
+}: ActionsCellProps) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Edit Mode: Save and Cancel buttons
+  if (mode === "edit") {
+    return (
+      <div className="flex items-center justify-center gap-1">
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSave?.();
+          }}
+          title="Save (Enter)"
+        >
+          <Save className="h-4 w-4" />
+        </Button>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCancel?.();
+          }}
+          title="Cancel (Esc)"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
+  // Display Mode: Quick complete + dropdown menu
   const isCompleted = currentStatus === "completed";
 
   return (
     <div
       className={cn(
-        isOpen
-          ? "opacity-100 bg-white"
-          : "opacity-0 group-hover:opacity-100 bg-white/10",
-        "hover:bg-white transition-all duration-200 absolute right-2 top-1/2 -translate-y-1/2 flex items-center p-1 gap-1 backdrop-blur-sm rounded shadow-sm"
+        isOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+        "transition-opacity duration-200 flex items-center justify-center gap-1"
       )}
     >
       {/* Quick Complete Button */}
@@ -50,7 +99,7 @@ const TaskRowActions = ({
           e.stopPropagation();
           onToggleComplete?.();
         }}
-        className={`relative z-10 p-1.5 rounded transition-colors ${
+        className={`p-1.5 rounded transition-colors ${
           isCompleted
             ? "bg-green-100 text-green-700 hover:bg-green-200"
             : "text-gray-500 hover:bg-green-100 hover:text-green-600"
@@ -67,7 +116,7 @@ const TaskRowActions = ({
             onClick={(e) => {
               e.stopPropagation();
             }}
-            className="relative z-10 p-1.5 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+            className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
             title="More options"
           >
             <MoreVertical className="w-4 h-4" />
@@ -78,7 +127,10 @@ const TaskRowActions = ({
           className="w-48 p-1.5 border-gray-200 shadow-lg"
         >
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="rounded px-2 py-1.5 text-sm hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">
+            <DropdownMenuSubTrigger
+              onClick={(e) => e.stopPropagation()}
+              className="rounded px-2 py-1.5 text-sm hover:bg-gray-100 focus:bg-gray-100 cursor-pointer"
+            >
               <ArrowRight className="w-4 h-4" />
               <span>Move to</span>
             </DropdownMenuSubTrigger>
@@ -146,4 +198,4 @@ const TaskRowActions = ({
   );
 };
 
-export default TaskRowActions;
+export default ActionsCell;

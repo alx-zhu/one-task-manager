@@ -88,6 +88,11 @@ export function TaskTable({
             );
           })
         )}
+        {/* Actions Header */}
+        <div
+          className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center"
+          style={{ width: "80px", minWidth: "80px" }}
+        ></div>
       </div>
 
       {/* Table Body */}
