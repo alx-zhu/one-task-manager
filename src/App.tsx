@@ -274,6 +274,64 @@ function App() {
     console.log("Deleted task with ID:", taskId);
   };
 
+  const handleDuplicateTask = (task: Task) => {
+    const id = `task-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+    // Check if current bucket has capacity
+    const currentBucket = buckets.find((b) => b.id === task.bucketId);
+    const currentBucketTasks = tasks.filter(
+      (t) => t.bucketId === task.bucketId
+    );
+    const hasCapacity =
+      !currentBucket?.limit || currentBucketTasks.length < currentBucket.limit;
+
+    let targetBucketId = task.bucketId;
+
+    // If current bucket is full, find first available bucket
+    if (!hasCapacity) {
+      const availableBucket = buckets.find((bucket) => {
+        const bucketTaskCount = tasks.filter(
+          (t) => t.bucketId === bucket.id
+        ).length;
+        return !bucket.limit || bucketTaskCount < bucket.limit;
+      });
+
+      if (availableBucket) {
+        targetBucketId = availableBucket.id;
+        console.log(
+          `Current bucket full. Moving duplicate to "${availableBucket.name}"`
+        );
+      } else {
+        console.warn("No available buckets with capacity for duplicate");
+        return;
+      }
+    }
+
+    const duplicatedTask: Task = {
+      ...task,
+      id,
+      title: `${task.title} (copy)`,
+      bucketId: targetBucketId,
+      orderInBucket: tasks.filter((t) => t.bucketId === targetBucketId).length,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    setTasks((prevTasks) => [...prevTasks, duplicatedTask]);
+    console.log("Duplicated task:", duplicatedTask);
+  };
+
+  const handleMoveToTask = (taskId: string, targetBucketId: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    const sourceBucketId = task.bucketId;
+
+    // Use existing moveTaskToBucket function
+    moveTaskToBucket(sourceBucketId, targetBucketId, taskId);
+    console.log(`Moved task ${taskId} to bucket ${targetBucketId}`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
@@ -318,9 +376,12 @@ function App() {
               <BucketSection
                 key={bucket.id}
                 bucket={bucket}
+                allBuckets={hydratedBuckets}
                 onCreateTask={handleCreateTask}
                 onUpdateTask={handleUpdateTask}
                 onDeleteTask={handleDeleteTask}
+                onDuplicateTask={handleDuplicateTask}
+                onMoveToTask={handleMoveToTask}
               />
             ))}
           </div>

@@ -4,7 +4,7 @@ import {
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-import type { EditedTask, NewTask, Task } from "@/types/task";
+import type { EditedTask, NewTask, Task, Bucket } from "@/types/task";
 import TaskRow from "./TaskRow/TaskRow";
 import {
   SortableContext,
@@ -22,6 +22,9 @@ interface TaskTableProps {
   onUpdateTask: (taskId: string, updatedTask: EditedTask) => void;
   onCancelAddTask: () => void;
   onDeleteTask: (taskId: string) => void;
+  onDuplicateTask?: (task: Task) => void;
+  onMoveToTask?: (taskId: string, bucketId: string) => void;
+  buckets?: Bucket[];
 }
 
 // Keep TaskTable only responsible for rendering the table structure
@@ -35,6 +38,9 @@ export function TaskTable({
   onUpdateTask,
   onCancelAddTask,
   onDeleteTask,
+  onDuplicateTask,
+  onMoveToTask,
+  buckets = [],
 }: TaskTableProps) {
   const table = useReactTable({
     data,
@@ -99,6 +105,9 @@ export function TaskTable({
                 row={row}
                 onUpdateTask={onUpdateTask}
                 onDeleteTask={onDeleteTask}
+                onDuplicateTask={onDuplicateTask}
+                onMoveToTask={onMoveToTask}
+                buckets={buckets}
               />
             ))}
             {isAddingTask && bucketId && (

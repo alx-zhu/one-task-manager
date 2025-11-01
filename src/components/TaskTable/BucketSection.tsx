@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Bucket, EditedTask, NewTask } from "@/types/task";
+import type { Bucket, EditedTask, NewTask, Task } from "@/types/task";
 import { TaskTable } from "./TaskTable";
 import { taskColumns } from "./columns";
 import { AnimatePresence, motion } from "framer-motion";
@@ -13,16 +13,22 @@ import type {
 
 interface BucketSectionProps {
   bucket: Bucket;
+  allBuckets?: Bucket[];
   onCreateTask: (task: NewTask) => void;
   onUpdateTask: (task: EditedTask) => void;
   onDeleteTask: (taskId: string) => void;
+  onDuplicateTask?: (task: Task) => void;
+  onMoveToTask?: (taskId: string, bucketId: string) => void;
 }
 
 export function BucketSection({
   bucket,
+  allBuckets = [],
   onCreateTask,
   onUpdateTask,
   onDeleteTask,
+  onDuplicateTask,
+  onMoveToTask,
 }: BucketSectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(bucket.collapsed);
   const [isAddingTask, setIsAddingTask] = useState(false);
@@ -211,6 +217,9 @@ export function BucketSection({
                 onUpdateTask={handleUpdateTask}
                 onCancelAddTask={handleCancelAddTask}
                 onDeleteTask={handleDeleteTask}
+                onDuplicateTask={onDuplicateTask}
+                onMoveToTask={onMoveToTask}
+                buckets={allBuckets}
               />
             </div>
             {/* Add Task Row */}

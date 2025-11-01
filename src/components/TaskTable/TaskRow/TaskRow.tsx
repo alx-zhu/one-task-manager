@@ -2,13 +2,16 @@ import { useState, useRef, useEffect } from "react";
 import TaskEditRow from "./TaskEditRow";
 import TaskDisplayRow from "./TaskDisplayRow";
 import type { Row } from "@tanstack/react-table";
-import type { EditedTask, Task } from "@/types/task";
+import type { EditedTask, Task, Bucket } from "@/types/task";
 
 interface TaskRowProps {
   row: Row<Task>;
   isPreview?: boolean;
   onUpdateTask: (taskId: string, updatedTask: EditedTask) => void;
   onDeleteTask?: (taskId: string) => void;
+  onDuplicateTask?: (task: Task) => void;
+  onMoveToTask?: (taskId: string, bucketId: string) => void;
+  buckets?: Bucket[];
 }
 
 const TaskRow = ({
@@ -16,6 +19,9 @@ const TaskRow = ({
   isPreview = false,
   onUpdateTask,
   onDeleteTask,
+  onDuplicateTask,
+  onMoveToTask,
+  buckets = [],
 }: TaskRowProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [focusColumn, setFocusColumn] = useState<string | null>(null);
@@ -91,7 +97,14 @@ const TaskRow = ({
       />
     </div>
   ) : (
-    <TaskDisplayRow row={row} onClick={handleClick} onDelete={onDeleteTask} />
+    <TaskDisplayRow
+      row={row}
+      onClick={handleClick}
+      onDelete={onDeleteTask}
+      onDuplicate={onDuplicateTask}
+      onMoveTo={onMoveToTask}
+      buckets={buckets}
+    />
   );
 };
 

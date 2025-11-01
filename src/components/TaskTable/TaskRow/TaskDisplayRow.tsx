@@ -1,7 +1,7 @@
 import { flexRender, type Row } from "@tanstack/react-table";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Task } from "@/types/task";
+import type { Task, Bucket } from "@/types/task";
 import { cn } from "@/lib/utils";
 import type { TaskDragDataType } from "@/types/dnd";
 import { useEffect, useState } from "react";
@@ -12,6 +12,9 @@ interface TaskDisplayRowProps {
   isPreview?: boolean;
   onClick?: (e: React.MouseEvent) => void;
   onDelete?: (taskId: string) => void;
+  onDuplicate?: (task: Task) => void;
+  onMoveTo?: (taskId: string, bucketId: string) => void;
+  buckets?: Bucket[];
 }
 
 const TaskDisplayRow = ({
@@ -19,6 +22,9 @@ const TaskDisplayRow = ({
   isPreview = false,
   onClick,
   onDelete,
+  onDuplicate,
+  onMoveTo,
+  buckets = [],
 }: TaskDisplayRowProps) => {
   const [insertPosition, setInsertPosition] = useState<
     "above" | "below" | null
@@ -83,8 +89,12 @@ const TaskDisplayRow = ({
     onDelete?.(row.original.id);
   };
 
-  const handleMoreOptions = () => {
-    console.log("More options for task:", row.original.id);
+  const handleDuplicate = () => {
+    onDuplicate?.(row.original);
+  };
+
+  const handleMoveTo = (bucketId: string) => {
+    onMoveTo?.(row.original.id, bucketId);
   };
 
   return (
@@ -126,8 +136,11 @@ const TaskDisplayRow = ({
       {/* Hover overlay with action buttons */}
       {!isPreview && !isDragging && (
         <TaskRowActions
+          buckets={buckets}
+          currentBucketId={row.original.bucketId}
           onDelete={handleDelete}
-          onMoreOptions={handleMoreOptions}
+          onDuplicate={handleDuplicate}
+          onMoveTo={handleMoveTo}
         />
       )}
     </div>
