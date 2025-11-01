@@ -1,4 +1,4 @@
-import { MoreVertical, Copy, Trash2, ArrowRight } from "lucide-react";
+import { MoreVertical, Copy, Trash2, ArrowRight, Check } from "lucide-react";
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -10,31 +10,57 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Bucket } from "@/types/task";
+import type { Bucket, TaskStatus } from "@/types/task";
+import { cn } from "@/lib/utils";
 
 interface TaskRowActionsProps {
   buckets: Bucket[];
   currentBucketId: string;
+  currentStatus: TaskStatus;
   onDelete?: () => void;
   onDuplicate?: () => void;
   onMoveTo?: (bucketId: string) => void;
+  onToggleComplete?: () => void;
 }
 
 const TaskRowActions = ({
   buckets,
   currentBucketId,
+  currentStatus,
   onDelete,
   onDuplicate,
   onMoveTo,
+  onToggleComplete,
 }: TaskRowActionsProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const isCompleted = currentStatus === "completed";
 
   return (
     <div
-      className={`${
-        isOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-      } hover:bg-white transition-all duration-200 absolute right-2 top-1/2 -translate-y-1/2 flex items-center p-1 gap-1 bg-white/10 backdrop-blur-sm rounded shadow-sm`}
+      className={cn(
+        isOpen
+          ? "opacity-100 bg-white"
+          : "opacity-0 group-hover:opacity-100 bg-white/10",
+        "hover:bg-white transition-all duration-200 absolute right-2 top-1/2 -translate-y-1/2 flex items-center p-1 gap-1 backdrop-blur-sm rounded shadow-sm"
+      )}
     >
+      {/* Quick Complete Button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleComplete?.();
+        }}
+        className={`relative z-10 p-1.5 rounded transition-colors ${
+          isCompleted
+            ? "bg-green-100 text-green-700 hover:bg-green-200"
+            : "text-gray-500 hover:bg-green-100 hover:text-green-600"
+        }`}
+        title={isCompleted ? "Mark as incomplete" : "Mark as complete"}
+      >
+        <Check className="w-4 h-4" />
+      </button>
+
+      {/* More Options Dropdown */}
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <button

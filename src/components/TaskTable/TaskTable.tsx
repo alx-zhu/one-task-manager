@@ -24,6 +24,7 @@ interface TaskTableProps {
   onDeleteTask: (taskId: string) => void;
   onDuplicateTask?: (task: Task) => void;
   onMoveToTask?: (taskId: string, bucketId: string) => void;
+  onToggleComplete?: (taskId: string) => void;
   buckets?: Bucket[];
 }
 
@@ -40,6 +41,7 @@ export function TaskTable({
   onDeleteTask,
   onDuplicateTask,
   onMoveToTask,
+  onToggleComplete,
   buckets = [],
 }: TaskTableProps) {
   const table = useReactTable({
@@ -107,6 +109,7 @@ export function TaskTable({
                 onDeleteTask={onDeleteTask}
                 onDuplicateTask={onDuplicateTask}
                 onMoveToTask={onMoveToTask}
+                onToggleComplete={onToggleComplete}
                 buckets={buckets}
               />
             ))}

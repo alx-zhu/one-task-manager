@@ -332,6 +332,20 @@ function App() {
     console.log(`Moved task ${taskId} to bucket ${targetBucketId}`);
   };
 
+  const handleToggleComplete = (taskId: string) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) => {
+        if (task.id === taskId) {
+          const newStatus =
+            task.status === "completed" ? "not-started" : "completed";
+          return { ...task, status: newStatus, updatedAt: new Date() };
+        }
+        return task;
+      })
+    );
+    console.log("Toggled task completion:", taskId);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
@@ -382,6 +396,7 @@ function App() {
                 onDeleteTask={handleDeleteTask}
                 onDuplicateTask={handleDuplicateTask}
                 onMoveToTask={handleMoveToTask}
+                onToggleComplete={handleToggleComplete}
               />
             ))}
           </div>

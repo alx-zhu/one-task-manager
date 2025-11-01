@@ -14,6 +14,7 @@ interface TaskDisplayRowProps {
   onDelete?: (taskId: string) => void;
   onDuplicate?: (task: Task) => void;
   onMoveTo?: (taskId: string, bucketId: string) => void;
+  onToggleComplete?: (taskId: string) => void;
   buckets?: Bucket[];
 }
 
@@ -24,6 +25,7 @@ const TaskDisplayRow = ({
   onDelete,
   onDuplicate,
   onMoveTo,
+  onToggleComplete,
   buckets = [],
 }: TaskDisplayRowProps) => {
   const [insertPosition, setInsertPosition] = useState<
@@ -97,6 +99,10 @@ const TaskDisplayRow = ({
     onMoveTo?.(row.original.id, bucketId);
   };
 
+  const handleToggleComplete = () => {
+    onToggleComplete?.(row.original.id);
+  };
+
   return (
     <div
       key={row.id}
@@ -138,9 +144,11 @@ const TaskDisplayRow = ({
         <TaskRowActions
           buckets={buckets}
           currentBucketId={row.original.bucketId}
+          currentStatus={row.original.status}
           onDelete={handleDelete}
           onDuplicate={handleDuplicate}
           onMoveTo={handleMoveTo}
+          onToggleComplete={handleToggleComplete}
         />
       )}
     </div>

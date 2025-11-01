@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import TaskEditRow from "./TaskEditRow";
 import TaskDisplayRow from "./TaskDisplayRow";
 import type { Row } from "@tanstack/react-table";
@@ -11,6 +11,7 @@ interface TaskRowProps {
   onDeleteTask?: (taskId: string) => void;
   onDuplicateTask?: (task: Task) => void;
   onMoveToTask?: (taskId: string, bucketId: string) => void;
+  onToggleComplete?: (taskId: string) => void;
   buckets?: Bucket[];
 }
 
@@ -21,43 +22,11 @@ const TaskRow = ({
   onDeleteTask,
   onDuplicateTask,
   onMoveToTask,
+  onToggleComplete,
   buckets = [],
 }: TaskRowProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [focusColumn, setFocusColumn] = useState<string | null>(null);
-  const editRowRef = useRef<HTMLDivElement>(null);
-
-  // Handle clicking outside to save and keyboard events
-  useEffect(() => {
-    if (!isEditing) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        editRowRef.current &&
-        !editRowRef.current.contains(e.target as Node)
-      ) {
-        onUpdateTask(row.original.id, row.original);
-        setIsEditing(false);
-      }
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        onUpdateTask(row.original.id, row.original);
-        setIsEditing(false);
-      } else if (e.key === "Escape") {
-        setIsEditing(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isEditing, onUpdateTask, row.original]);
 
   const handleClick = (e: React.MouseEvent) => {
     if (!(e.target instanceof HTMLElement)) return;
@@ -80,22 +49,20 @@ const TaskRow = ({
   }
 
   return isEditing ? (
-    <div ref={editRowRef}>
-      <TaskEditRow
-        bucketId={row.original.bucketId}
-        existingTask={row.original}
-        focusColumn={focusColumn}
-        onSaveEditTask={(updatedTask) => {
-          onUpdateTask(row.original.id, updatedTask);
-          setIsEditing(false);
-          setFocusColumn(null);
-        }}
-        onCancel={() => {
-          setIsEditing(false);
-          setFocusColumn(null);
-        }}
-      />
-    </div>
+    <TaskEditRow
+      bucketId={row.original.bucketId}
+      existingTask={row.original}
+      focusColumn={focusColumn}
+      onSaveEditTask={(updatedTask) => {
+        onUpdateTask(row.original.id, updatedTask);
+        setIsEditing(false);
+        setFocusColumn(null);
+      }}
+      onCancel={() => {
+        setIsEditing(false);
+        setFocusColumn(null);
+      }}
+    />
   ) : (
     <TaskDisplayRow
       row={row}
@@ -103,6 +70,7 @@ const TaskRow = ({
       onDelete={onDeleteTask}
       onDuplicate={onDuplicateTask}
       onMoveTo={onMoveToTask}
+      onToggleComplete={onToggleComplete}
       buckets={buckets}
     />
   );

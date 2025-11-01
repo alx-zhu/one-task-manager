@@ -19,6 +19,7 @@ interface BucketSectionProps {
   onDeleteTask: (taskId: string) => void;
   onDuplicateTask?: (task: Task) => void;
   onMoveToTask?: (taskId: string, bucketId: string) => void;
+  onToggleComplete?: (taskId: string) => void;
 }
 
 export function BucketSection({
@@ -29,6 +30,7 @@ export function BucketSection({
   onDeleteTask,
   onDuplicateTask,
   onMoveToTask,
+  onToggleComplete,
 }: BucketSectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(bucket.collapsed);
   const [isAddingTask, setIsAddingTask] = useState(false);
@@ -219,6 +221,7 @@ export function BucketSection({
                 onDeleteTask={handleDeleteTask}
                 onDuplicateTask={onDuplicateTask}
                 onMoveToTask={onMoveToTask}
+                onToggleComplete={onToggleComplete}
                 buckets={allBuckets}
               />
             </div>
