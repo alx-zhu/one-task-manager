@@ -27,7 +27,10 @@ import { hydrateBucketsWithTasks } from "./lib/utils";
 import type { DragDataType } from "./types/dnd";
 import { useTasks } from "./hooks/useTasks";
 import { useBuckets } from "./hooks/useBuckets";
-import { useTaskOperations } from "./hooks/useTaskOperations";
+import {
+  useMoveTaskToBucket,
+  useReorderTasksInBucket,
+} from "./hooks/useTaskDragOperations";
 
 function App() {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
@@ -35,9 +38,8 @@ function App() {
   // Fetch data using React Query
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   const { data: buckets = [], isLoading: bucketsLoading } = useBuckets();
-
-  // Get task operations (all the CRUD functions)
-  const taskOps = useTaskOperations();
+  const moveTaskToBucket = useMoveTaskToBucket();
+  const reorderTasksInBucket = useReorderTasksInBucket();
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -58,6 +60,19 @@ function App() {
     [buckets, tasks]
   );
 
+  const canMoveTaskToBucket = (
+    taskId: string,
+    targetBucketId: string
+  ): boolean => {
+    const targetBucket = hydratedBuckets.find((b) => b.id === targetBucketId);
+    if (!targetBucket || !targetBucket.limit) return true;
+
+    const taskAlreadyInBucket = targetBucket.tasks.some((t) => t.id === taskId);
+
+    if (taskAlreadyInBucket) return true;
+    return targetBucket.tasks.length < targetBucket.limit;
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     const task: Task = event.active.data.current?.task;
     setDraggedTask(task);
@@ -76,22 +91,18 @@ function App() {
     // Case 1: Dropped on another task
     if (overData?.type === "task") {
       const targetTask = overData.task;
-      const sourceBucketId = draggedTask.bucketId;
       const targetBucketId = targetTask.bucketId;
 
-      if (sourceBucketId === targetBucketId) {
-        taskOps.reorderTasksInBucket(
-          sourceBucketId,
-          draggedTask.id,
-          targetTask.id
-        );
+      if (!canMoveTaskToBucket(draggedTask.id, targetBucketId)) {
+        console.warn("Cannot move: Target bucket is at capacity");
+        setDraggedTask(null);
+        return;
+      }
+
+      if (draggedTask.bucketId === targetBucketId) {
+        reorderTasksInBucket(draggedTask, targetTask.id);
       } else {
-        taskOps.moveTaskBetweenBuckets(
-          sourceBucketId,
-          targetBucketId,
-          draggedTask.id,
-          targetTask.id
-        );
+        moveTaskToBucket(draggedTask, targetBucketId, targetTask.id);
       }
     }
 
@@ -101,25 +112,14 @@ function App() {
       const sourceBucketId = draggedTask.bucketId;
       const targetBucketId = targetBucket.id;
 
-      // Check bucket limit before moving
-      const targetBucketTaskCount = tasks.filter(
-        (t) => t.bucketId === targetBucketId
-      ).length;
-
-      if (targetBucket.limit && targetBucketTaskCount >= targetBucket.limit) {
-        console.warn(
-          `Cannot move: Bucket "${targetBucket.name}" is at capacity`
-        );
+      if (!canMoveTaskToBucket(draggedTask.id, targetBucketId)) {
+        console.warn("Cannot move: Target bucket is at capacity");
         setDraggedTask(null);
         return;
       }
 
       if (sourceBucketId !== targetBucketId) {
-        taskOps.moveTaskBetweenBuckets(
-          sourceBucketId,
-          targetBucketId,
-          draggedTask.id
-        );
+        moveTaskToBucket(draggedTask, targetBucketId);
       }
     }
 
@@ -180,11 +180,7 @@ function App() {
         >
           <div>
             {hydratedBuckets.map((bucket) => (
-              <BucketSection
-                key={bucket.id}
-                bucket={bucket}
-                allBuckets={hydratedBuckets}
-              />
+              <BucketSection key={bucket.id} bucket={bucket} />
             ))}
           </div>
 

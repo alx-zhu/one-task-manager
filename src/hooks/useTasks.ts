@@ -9,7 +9,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Task, NewTask, EditedTask, TaskStatus } from "@/types/task";
+import type { Task, NewTask, EditedTask, Bucket } from "@/types/task";
 import * as tasksApi from "@/api/tasks.api";
 
 // Query keys for cache management
@@ -78,12 +78,52 @@ export const useCreateTask = () => {
 /**
  * Update an existing task
  *
- * No optimistic updates to avoid conflicts with drag & drop
- * and other simultaneous operations. Updates will show after
- * the mutation completes and data refetches.
+ * @param optimistic - If true, applies optimistic updates for immediate UI feedback.
+ *                     If false, waits for server response to avoid conflicts with
+ *                     drag & drop and other simultaneous operations.
  */
-export const useUpdateTask = () => {
+export const useUpdateTask = (optimistic: boolean = true) => {
   const queryClient = useQueryClient();
+
+  const handleMutate = async ({
+    taskId,
+    updates,
+  }: {
+    taskId: string;
+    updates: Partial<EditedTask>;
+  }) => {
+    await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
+
+    const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
+
+    if (previousTasks) {
+      queryClient.setQueryData<Task[]>(
+        taskKeys.lists(),
+        previousTasks.map((task: Task) =>
+          task.id === taskId ? { ...task, ...updates } : task
+        )
+      );
+    }
+
+    return { previousTasks };
+  };
+
+  const handleError = (
+    _err: Error,
+    _variables: {
+      taskId: string;
+      updates: Partial<EditedTask>;
+    },
+    context:
+      | {
+          previousTasks: Task[] | undefined;
+        }
+      | undefined
+  ) => {
+    if (context?.previousTasks) {
+      queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
+    }
+  };
 
   return useMutation({
     mutationFn: ({
@@ -93,8 +133,10 @@ export const useUpdateTask = () => {
       taskId: string;
       updates: Partial<EditedTask>;
     }) => tasksApi.updateTask(taskId, updates),
+    onMutate: optimistic ? handleMutate : undefined,
+    onError: optimistic ? handleError : undefined,
     onSuccess: () => {
-      // Refetch to get updated data from source
+      // Always refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
   });
@@ -154,43 +196,55 @@ export const useBulkUpdateTasks = () => {
 };
 
 /**
- * Toggle task completion
+ * Hook for duplicating tasks with bucket capacity logic
  */
-export const useToggleTaskCompletion = () => {
+export function useDuplicateTask() {
   const queryClient = useQueryClient();
+  const createTask = useCreateTask();
 
-  return useMutation({
-    mutationFn: ({
-      taskId,
-      currentStatus,
-    }: {
-      taskId: string;
-      currentStatus: TaskStatus;
-    }) => tasksApi.toggleTaskCompletion(taskId, currentStatus),
-    onMutate: async ({ taskId, currentStatus }) => {
-      await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
+  return async (task: Task, buckets: Bucket[]) => {
+    const tasks = queryClient.getQueryData<Task[]>(taskKeys.lists()) || [];
 
-      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
-      const newStatus =
-        currentStatus === "completed" ? "not-started" : "completed";
+    // Check if current bucket has capacity
+    const currentBucket = buckets.find((b) => b.id === task.bucketId);
+    const currentBucketTasks = tasks.filter(
+      (t) => t.bucketId === task.bucketId
+    );
+    const hasCapacity =
+      !currentBucket?.limit || currentBucketTasks.length < currentBucket.limit;
 
-      if (previousTasks) {
-        queryClient.setQueryData<Task[]>(
-          taskKeys.lists(),
-          previousTasks.map((task: Task) =>
-            task.id === taskId
-              ? { ...task, status: newStatus as TaskStatus }
-              : task
-          )
-        );
+    let targetBucketId = task.bucketId;
+
+    // If current bucket is full, find first available bucket
+    if (!hasCapacity) {
+      const availableBucket = buckets.find((bucket) => {
+        const bucketTaskCount = tasks.filter(
+          (t) => t.bucketId === bucket.id
+        ).length;
+        return !bucket.limit || bucketTaskCount < bucket.limit;
+      });
+
+      if (availableBucket) {
+        targetBucketId = availableBucket.id;
+      } else {
+        throw new Error("No available buckets with capacity for duplicate");
       }
+    }
 
-      return { previousTasks };
-    },
-    onError: (_err, _variables, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
-      }
-    },
-  });
-};
+    const newTask: NewTask = {
+      title: `${task.title} (copy)`,
+      description: task.description,
+      status: task.status,
+      priority: task.priority,
+      tags: task.tags,
+      dueDate: task.dueDate,
+      bucketId: targetBucketId,
+      orderInBucket: tasks.filter((t) => t.bucketId === targetBucketId).length,
+      userId: task.userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    return createTask.mutateAsync(newTask);
+  };
+}

@@ -10,18 +10,17 @@ import type {
   TaskDragDataType,
   DragDataType,
 } from "@/types/dnd";
-import { useTaskOperations } from "@/hooks/useTaskOperations";
 import TaskEditRow from "./row/TaskEditRow";
+import { useCreateTask } from "@/hooks/useTasks";
 
 interface BucketSectionProps {
   bucket: Bucket;
-  allBuckets?: Bucket[];
 }
 
-export function BucketSection({ bucket, allBuckets = [] }: BucketSectionProps) {
-  const taskOps = useTaskOperations();
+export function BucketSection({ bucket }: BucketSectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(bucket.collapsed);
   const [isAddingTask, setIsAddingTask] = useState(false);
+  const { mutate: createTask } = useCreateTask();
 
   const { active, over } = useDndContext();
 
@@ -129,7 +128,7 @@ export function BucketSection({ bucket, allBuckets = [] }: BucketSectionProps) {
       ...task,
       orderInBucket: bucket.tasks.length,
     };
-    taskOps.createTask(newTaskWithOrder);
+    createTask(newTaskWithOrder);
     setIsAddingTask(false);
   };
 
@@ -183,11 +182,7 @@ export function BucketSection({ bucket, allBuckets = [] }: BucketSectionProps) {
                   "border-b-2 border-b-blue-500"
               )}
             >
-              <TaskTable
-                data={bucket.tasks}
-                columns={taskColumns}
-                buckets={allBuckets}
-              />
+              <TaskTable data={bucket.tasks} columns={taskColumns} />
             </div>
 
             {isAddingTask && (

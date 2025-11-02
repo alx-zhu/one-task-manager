@@ -11,10 +11,10 @@ interface TaskDisplayRowProps {
   row: Row<Task>;
   isPreview?: boolean;
   onClick?: (e: React.MouseEvent) => void;
-  onDelete?: (taskId: string) => void;
-  onDuplicate?: (task: Task) => void;
-  onMoveTo?: (taskId: string, bucketId: string) => void;
-  onToggleComplete?: (taskId: string) => void;
+  onDelete?: () => void;
+  onDuplicate?: () => void;
+  onMoveTo?: (bucketId: string) => void;
+  onToggleComplete?: () => void;
   buckets?: Bucket[];
 }
 
@@ -88,19 +88,19 @@ const TaskDisplayRow = ({
   );
 
   const handleDelete = () => {
-    onDelete?.(row.original.id);
+    onDelete?.();
   };
 
   const handleDuplicate = () => {
-    onDuplicate?.(row.original);
+    onDuplicate?.();
   };
 
   const handleMoveTo = (bucketId: string) => {
-    onMoveTo?.(row.original.id, bucketId);
+    onMoveTo?.(bucketId);
   };
 
   const handleToggleComplete = () => {
-    onToggleComplete?.(row.original.id);
+    onToggleComplete?.();
   };
 
   return (

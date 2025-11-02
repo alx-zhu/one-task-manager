@@ -18,7 +18,7 @@ interface TaskTableProps {
 }
 
 // Keep TaskTable only responsible for rendering the table structure
-export function TaskTable({ data, columns, buckets = [] }: TaskTableProps) {
+export function TaskTable({ data, columns }: TaskTableProps) {
   const table = useReactTable({
     data,
     columns,
@@ -74,7 +74,7 @@ export function TaskTable({ data, columns, buckets = [] }: TaskTableProps) {
         ) : (
           <div>
             {table.getRowModel().rows.map((row) => (
-              <TaskRow key={row.id} row={row} buckets={buckets} />
+              <TaskRow key={row.id} row={row} />
             ))}
           </div>
         )}
