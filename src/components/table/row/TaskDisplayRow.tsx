@@ -51,6 +51,14 @@ const TaskDisplayRow = ({
 
   const activeData = active?.data?.current as TaskDragDataType;
 
+  // Extract primitive values to avoid dependency issues
+  const draggedTaskId = activeData?.task?.id;
+  const draggedTaskBucketId = activeData?.task?.bucketId;
+  const draggedTaskOrder = activeData?.task?.orderInBucket;
+  const currentTaskId = row.original.id;
+  const currentTaskBucketId = row.original.bucketId;
+  const currentTaskOrder = row.original.orderInBucket;
+
   useEffect(() => {
     // If dragging or not hovering over this row, there should be no insert position border
     if (!isOver || isDragging) {
@@ -58,21 +66,33 @@ const TaskDisplayRow = ({
       return;
     }
 
-    const draggedTask = activeData?.task;
-    const currentTask = row.original;
-    if (!draggedTask) return;
+    if (!draggedTaskId) {
+      setInsertPosition(null);
+      return;
+    }
 
-    if (draggedTask.bucketId !== currentTask.bucketId) {
+    if (draggedTaskBucketId !== currentTaskBucketId) {
       setInsertPosition("above");
       return;
     }
 
-    if (draggedTask.orderInBucket < currentTask.orderInBucket) {
-      setInsertPosition("below");
-    } else {
-      setInsertPosition("above");
+    if (draggedTaskOrder !== undefined && currentTaskOrder !== undefined) {
+      if (draggedTaskOrder < currentTaskOrder) {
+        setInsertPosition("below");
+      } else {
+        setInsertPosition("above");
+      }
     }
-  }, [isOver, isDragging, activeData, row.original]);
+  }, [
+    isOver,
+    isDragging,
+    draggedTaskId,
+    draggedTaskBucketId,
+    draggedTaskOrder,
+    currentTaskId,
+    currentTaskBucketId,
+    currentTaskOrder,
+  ]);
 
   const style = {
     transform: CSS.Transform.toString(transform),

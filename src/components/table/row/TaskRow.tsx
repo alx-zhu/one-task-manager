@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import TaskEditRow from "./TaskEditRow";
 import TaskDisplayRow from "./TaskDisplayRow";
 import type { Row } from "@tanstack/react-table";
@@ -17,7 +17,7 @@ interface TaskRowProps {
   buckets?: Bucket[];
 }
 
-const TaskRow = ({ row, isPreview = false }: TaskRowProps) => {
+const TaskRow = memo(({ row, isPreview = false }: TaskRowProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [focusColumn, setFocusColumn] = useState<string | null>(null);
   const { data: buckets = [] } = useBuckets();
@@ -84,6 +84,8 @@ const TaskRow = ({ row, isPreview = false }: TaskRowProps) => {
       buckets={buckets}
     />
   );
-};
+});
+
+TaskRow.displayName = "TaskRow";
 
 export default TaskRow;
