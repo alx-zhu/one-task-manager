@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Bucket, EditedTask, NewTask, Task } from "@/types/task";
+import type { Bucket, NewTask } from "@/types/task";
 import { TaskTable } from "./TaskTable";
 import { taskColumns } from "./columns";
 import { AnimatePresence, motion } from "framer-motion";
@@ -7,31 +7,19 @@ import { useDroppable, useDndContext } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 import type {
   BucketDragDataType,
-  DragDataType,
   TaskDragDataType,
+  DragDataType,
 } from "@/types/dnd";
+import { useTaskOperations } from "@/hooks/useTaskOperations";
+import TaskEditRow from "./row/TaskEditRow";
 
 interface BucketSectionProps {
   bucket: Bucket;
   allBuckets?: Bucket[];
-  onCreateTask: (task: NewTask) => void;
-  onUpdateTask: (task: EditedTask) => void;
-  onDeleteTask: (taskId: string) => void;
-  onDuplicateTask?: (task: Task) => void;
-  onMoveToTask?: (taskId: string, bucketId: string) => void;
-  onToggleComplete?: (taskId: string) => void;
 }
 
-export function BucketSection({
-  bucket,
-  allBuckets = [],
-  onCreateTask,
-  onUpdateTask,
-  onDeleteTask,
-  onDuplicateTask,
-  onMoveToTask,
-  onToggleComplete,
-}: BucketSectionProps) {
+export function BucketSection({ bucket, allBuckets = [] }: BucketSectionProps) {
+  const taskOps = useTaskOperations();
   const [isCollapsed, setIsCollapsed] = useState(bucket.collapsed);
   const [isAddingTask, setIsAddingTask] = useState(false);
 
@@ -136,27 +124,13 @@ export function BucketSection({
     setIsAddingTask(true);
   };
 
-  const handleSaveNewTask = (task: NewTask) => {
-    if (onCreateTask) {
-      onCreateTask(task);
-    }
+  const handleSaveNewTask = (task: Omit<NewTask, "orderInBucket">) => {
+    const newTaskWithOrder: NewTask = {
+      ...task,
+      orderInBucket: bucket.tasks.length,
+    };
+    taskOps.createTask(newTaskWithOrder);
     setIsAddingTask(false);
-  };
-
-  const handleSaveEditTask = (task: EditedTask) => {
-    if (onUpdateTask) {
-      onUpdateTask(task);
-    }
-  };
-
-  const handleUpdateTask = (taskId: string, updatedTask: EditedTask) => {
-    if (onUpdateTask) {
-      onUpdateTask({ ...updatedTask, id: taskId });
-    }
-  };
-
-  const handleDeleteTask = (taskId: string) => {
-    onDeleteTask?.(taskId);
   };
 
   const handleCancelAddTask = () => {
@@ -212,19 +186,18 @@ export function BucketSection({
               <TaskTable
                 data={bucket.tasks}
                 columns={taskColumns}
-                bucketId={bucket.id}
-                isAddingTask={isAddingTask}
-                onSaveNewTask={handleSaveNewTask}
-                onSaveEditTask={handleSaveEditTask}
-                onUpdateTask={handleUpdateTask}
-                onCancelAddTask={handleCancelAddTask}
-                onDeleteTask={handleDeleteTask}
-                onDuplicateTask={onDuplicateTask}
-                onMoveToTask={onMoveToTask}
-                onToggleComplete={onToggleComplete}
                 buckets={allBuckets}
               />
             </div>
+
+            {isAddingTask && (
+              <TaskEditRow
+                bucketId={bucket.id}
+                onSaveNewTask={handleSaveNewTask}
+                onCancel={handleCancelAddTask}
+              />
+            )}
+
             {/* Add Task Row */}
             {!isAddingTask && (
               <div className="flex p-2 border-t border-gray-100">

@@ -4,46 +4,21 @@ import {
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-import type { EditedTask, NewTask, Task, Bucket } from "@/types/task";
+import type { Task, Bucket } from "@/types/task";
 import TaskRow from "./row/TaskRow";
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import TaskEditRow from "./row/TaskEditRow";
 
 interface TaskTableProps {
   data: Task[];
   columns: ColumnDef<Task>[];
-  bucketId?: string;
-  isAddingTask?: boolean;
-  onSaveNewTask: (task: NewTask) => void;
-  onSaveEditTask: (task: EditedTask) => void;
-  onUpdateTask: (taskId: string, updatedTask: EditedTask) => void;
-  onCancelAddTask: () => void;
-  onDeleteTask: (taskId: string) => void;
-  onDuplicateTask?: (task: Task) => void;
-  onMoveToTask?: (taskId: string, bucketId: string) => void;
-  onToggleComplete?: (taskId: string) => void;
   buckets?: Bucket[];
 }
 
 // Keep TaskTable only responsible for rendering the table structure
-export function TaskTable({
-  data,
-  columns,
-  bucketId,
-  isAddingTask,
-  onSaveNewTask,
-  onSaveEditTask,
-  onUpdateTask,
-  onCancelAddTask,
-  onDeleteTask,
-  onDuplicateTask,
-  onMoveToTask,
-  onToggleComplete,
-  buckets = [],
-}: TaskTableProps) {
+export function TaskTable({ data, columns, buckets = [] }: TaskTableProps) {
   const table = useReactTable({
     data,
     columns,
@@ -51,14 +26,6 @@ export function TaskTable({
   });
 
   const isEmpty = data.length === 0;
-
-  const handleSaveNewTask = (task: Omit<NewTask, "orderInBucket">) => {
-    const newTaskWithOrder: NewTask = {
-      ...task,
-      orderInBucket: data.length,
-    };
-    onSaveNewTask(newTaskWithOrder);
-  };
 
   return (
     <>
@@ -100,32 +67,15 @@ export function TaskTable({
         items={table.getRowModel().rows.map((row) => row.id)}
         strategy={verticalListSortingStrategy}
       >
-        {isEmpty && !isAddingTask ? (
+        {isEmpty ? (
           <div className="p-8 text-center text-gray-400 text-sm border-2 border-dashed border-gray-200 m-4 rounded-lg">
-            Drop tasks here
+            No tasks in this bucket.
           </div>
         ) : (
           <div>
             {table.getRowModel().rows.map((row) => (
-              <TaskRow
-                key={row.id}
-                row={row}
-                onUpdateTask={onUpdateTask}
-                onDeleteTask={onDeleteTask}
-                onDuplicateTask={onDuplicateTask}
-                onMoveToTask={onMoveToTask}
-                onToggleComplete={onToggleComplete}
-                buckets={buckets}
-              />
+              <TaskRow key={row.id} row={row} buckets={buckets} />
             ))}
-            {isAddingTask && bucketId && (
-              <TaskEditRow
-                bucketId={bucketId}
-                onSaveNewTask={handleSaveNewTask}
-                onSaveEditTask={onSaveEditTask}
-                onCancel={onCancelAddTask}
-              />
-            )}
           </div>
         )}
       </SortableContext>

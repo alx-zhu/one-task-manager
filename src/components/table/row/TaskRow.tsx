@@ -2,31 +2,24 @@ import { useState } from "react";
 import TaskEditRow from "./TaskEditRow";
 import TaskDisplayRow from "./TaskDisplayRow";
 import type { Row } from "@tanstack/react-table";
-import type { EditedTask, Task, Bucket } from "@/types/task";
+import type { Task, Bucket } from "@/types/task";
+import { useTaskOperations } from "@/hooks/useTaskOperations";
+import { useBuckets } from "@/hooks/useBuckets";
 
 interface TaskRowProps {
   row: Row<Task>;
   isPreview?: boolean;
-  onUpdateTask: (taskId: string, updatedTask: EditedTask) => void;
-  onDeleteTask?: (taskId: string) => void;
-  onDuplicateTask?: (task: Task) => void;
-  onMoveToTask?: (taskId: string, bucketId: string) => void;
-  onToggleComplete?: (taskId: string) => void;
   buckets?: Bucket[];
 }
 
-const TaskRow = ({
-  row,
-  isPreview = false,
-  onUpdateTask,
-  onDeleteTask,
-  onDuplicateTask,
-  onMoveToTask,
-  onToggleComplete,
-  buckets = [],
-}: TaskRowProps) => {
+const TaskRow = ({ row, isPreview = false, buckets = [] }: TaskRowProps) => {
+  const taskOps = useTaskOperations();
+  const { data: allBuckets = [] } = useBuckets();
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [focusColumn, setFocusColumn] = useState<string | null>(null);
+
+  // Use provided buckets prop or fetched buckets
+  const bucketsToUse = buckets.length > 0 ? buckets : allBuckets;
 
   const handleClick = (e: React.MouseEvent) => {
     if (!(e.target instanceof HTMLElement)) return;
@@ -54,7 +47,7 @@ const TaskRow = ({
       existingTask={row.original}
       focusColumn={focusColumn}
       onSaveEditTask={(updatedTask) => {
-        onUpdateTask(row.original.id, updatedTask);
+        taskOps.updateTask(row.original.id, updatedTask);
         setIsEditing(false);
         setFocusColumn(null);
       }}
@@ -67,11 +60,13 @@ const TaskRow = ({
     <TaskDisplayRow
       row={row}
       onClick={handleClick}
-      onDelete={onDeleteTask}
-      onDuplicate={onDuplicateTask}
-      onMoveTo={onMoveToTask}
-      onToggleComplete={onToggleComplete}
-      buckets={buckets}
+      onDelete={(taskId) => taskOps.deleteTask(taskId)}
+      onDuplicate={(task) => taskOps.duplicateTask(task, bucketsToUse)}
+      onMoveTo={(taskId, bucketId) =>
+        taskOps.moveTaskToBucket(taskId, bucketId)
+      }
+      onToggleComplete={(taskId) => taskOps.toggleTaskCompletion(taskId)}
+      buckets={bucketsToUse}
     />
   );
 };

@@ -22,7 +22,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { TaskRowPreview } from "./components/table/row/TaskPreviewRow";
-import type { Task, EditedTask } from "./types/task";
+import type { Task } from "./types/task";
 import { hydrateBucketsWithTasks } from "./lib/utils";
 import type { DragDataType } from "./types/dnd";
 import { useTasks } from "./hooks/useTasks";
@@ -184,18 +184,6 @@ function App() {
                 key={bucket.id}
                 bucket={bucket}
                 allBuckets={hydratedBuckets}
-                onCreateTask={taskOps.createTask}
-                onUpdateTask={(task: EditedTask) => {
-                  if (task.id) {
-                    taskOps.updateTask(task.id, task);
-                  }
-                }}
-                onDeleteTask={taskOps.deleteTask}
-                onDuplicateTask={(task: Task) =>
-                  taskOps.duplicateTask(task, hydratedBuckets)
-                }
-                onMoveToTask={taskOps.moveTaskToBucket}
-                onToggleComplete={taskOps.toggleTaskCompletion}
               />
             ))}
           </div>
