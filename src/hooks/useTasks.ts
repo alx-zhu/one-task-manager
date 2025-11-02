@@ -77,6 +77,10 @@ export const useCreateTask = () => {
 
 /**
  * Update an existing task
+ *
+ * No optimistic updates to avoid conflicts with drag & drop
+ * and other simultaneous operations. Updates will show after
+ * the mutation completes and data refetches.
  */
 export const useUpdateTask = () => {
   const queryClient = useQueryClient();
@@ -89,34 +93,8 @@ export const useUpdateTask = () => {
       taskId: string;
       updates: Partial<EditedTask>;
     }) => tasksApi.updateTask(taskId, updates),
-    onMutate: async ({
-      taskId,
-      updates,
-    }: {
-      taskId: string;
-      updates: Partial<EditedTask>;
-    }) => {
-      await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
-
-      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
-
-      if (previousTasks) {
-        queryClient.setQueryData<Task[]>(
-          taskKeys.lists(),
-          previousTasks.map((task: Task) =>
-            task.id === taskId ? { ...task, ...updates } : task
-          )
-        );
-      }
-
-      return { previousTasks };
-    },
-    onError: (_err, _variables, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
-      }
-    },
     onSuccess: () => {
+      // Refetch to get updated data from source
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
   });
@@ -157,36 +135,19 @@ export const useDeleteTask = () => {
 
 /**
  * Bulk update tasks (for drag & drop reordering)
+ *
+ * IMPORTANT: Uses onSuccess instead of optimistic updates to avoid
+ * flickering/bouncing during drag operations
  */
 export const useBulkUpdateTasks = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: tasksApi.bulkUpdateTasks,
-    onMutate: async (updates: Partial<Task>[]) => {
-      await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
-
-      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
-
-      if (previousTasks) {
-        const updateMap = new Map(updates.map((u) => [u.id, u]));
-        queryClient.setQueryData<Task[]>(
-          taskKeys.lists(),
-          previousTasks.map((task) => {
-            const update = updateMap.get(task.id);
-            return update ? { ...task, ...update } : task;
-          })
-        );
-      }
-
-      return { previousTasks };
-    },
-    onError: (_err, _variables, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
-      }
-    },
-    onSettled: () => {
+    // NO optimistic updates - let drag & drop handle the UI
+    // React Query will update after the operation completes
+    onSuccess: () => {
+      // Refetch to get server state
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
   });

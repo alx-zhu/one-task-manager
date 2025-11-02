@@ -125,8 +125,11 @@ export const useTaskOperations = () => {
 
   /**
    * Reorder tasks within the same bucket
+   *
+   * This is called during drag & drop, so we want to update
+   * the cache synchronously to avoid bouncing
    */
-  const reorderTasksInBucket = async (
+  const reorderTasksInBucket = (
     bucketId: string,
     activeId: string,
     overId: string
@@ -153,7 +156,18 @@ export const useTaskOperations = () => {
       orderInBucket: index,
     }));
 
-    return bulkUpdateMutation.mutateAsync(updates);
+    // Update cache immediately (synchronously)
+    const allTasks = getTasks();
+    const updateMap = new Map(updates.map((u) => [u.id, u]));
+    const updatedTasks = allTasks.map((task) => {
+      const update = updateMap.get(task.id);
+      return update ? { ...task, ...update } : task;
+    });
+
+    queryClient.setQueryData(taskKeys.lists(), updatedTasks);
+
+    // Then trigger the async mutation in the background
+    bulkUpdateMutation.mutate(updates);
   };
 
   /**
@@ -220,7 +234,18 @@ export const useTaskOperations = () => {
     // Combine all updates
     const allUpdates = [...targetUpdates, ...sourceUpdates];
 
-    return bulkUpdateMutation.mutateAsync(allUpdates);
+    // Update cache immediately (synchronously)
+    const allTasks = getTasks();
+    const updateMap = new Map(allUpdates.map((u) => [u.id, u]));
+    const updatedTasks = allTasks.map((task) => {
+      const update = updateMap.get(task.id);
+      return update ? { ...task, ...update } : task;
+    });
+
+    queryClient.setQueryData(taskKeys.lists(), updatedTasks);
+
+    // Then trigger the async mutation in the background
+    bulkUpdateMutation.mutate(allUpdates);
   };
 
   /**

@@ -194,11 +194,11 @@ export const moveTaskToBucket = async (
  */
 export const toggleTaskCompletion = async (
   taskId: string,
-  currentStatus: TaskStatus
+  currentStatus: string
 ): Promise<Task> => {
   const newStatus = currentStatus === "completed" ? "not-started" : "completed";
   return updateTask(taskId, {
     id: taskId,
-    status: newStatus,
+    status: newStatus as TaskStatus,
   });
 };
