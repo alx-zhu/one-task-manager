@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import ActionsCell from "./ActionsCell";
+import ActionsCell from "../cells/ActionsCell";
 import {
   statusStyles,
   statusHoverStyles,

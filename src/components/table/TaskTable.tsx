@@ -5,12 +5,12 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import type { EditedTask, NewTask, Task, Bucket } from "@/types/task";
-import TaskRow from "./TaskRow/TaskRow";
+import TaskRow from "./row/TaskRow";
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import TaskEditRow from "./TaskRow/TaskEditRow";
+import TaskEditRow from "./row/TaskEditRow";
 
 interface TaskTableProps {
   data: Task[];

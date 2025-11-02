@@ -5,7 +5,7 @@ import type { Task, Bucket } from "@/types/task";
 import { cn } from "@/lib/utils";
 import type { TaskDragDataType } from "@/types/dnd";
 import { useEffect, useState } from "react";
-import ActionsCell from "./ActionsCell";
+import ActionsCell from "../cells/ActionsCell";
 
 interface TaskDisplayRowProps {
   row: Row<Task>;
