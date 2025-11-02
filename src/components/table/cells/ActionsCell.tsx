@@ -58,7 +58,7 @@ const ActionsCell = ({
         <Button
           size="icon"
           variant="ghost"
-          className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50"
+          className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
           onClick={(e) => {
             e.stopPropagation();
             onSave?.();

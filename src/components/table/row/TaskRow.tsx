@@ -1,32 +1,32 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import TaskEditRow from "./TaskEditRow";
 import TaskDisplayRow from "./TaskDisplayRow";
 import type { Row } from "@tanstack/react-table";
-import type { EditedTask, Task, Bucket } from "@/types/task";
+import type { Task, Bucket } from "@/types/task";
+import {
+  useDeleteTask,
+  useDuplicateTask,
+  useUpdateTask,
+} from "@/hooks/useTasks";
+import { useMoveTaskToBucket } from "@/hooks/useTaskDragOperations";
+import { useBuckets } from "@/hooks/useBuckets";
 
 interface TaskRowProps {
   row: Row<Task>;
   isPreview?: boolean;
-  onUpdateTask: (taskId: string, updatedTask: EditedTask) => void;
-  onDeleteTask?: (taskId: string) => void;
-  onDuplicateTask?: (task: Task) => void;
-  onMoveToTask?: (taskId: string, bucketId: string) => void;
-  onToggleComplete?: (taskId: string) => void;
   buckets?: Bucket[];
 }
 
-const TaskRow = ({
-  row,
-  isPreview = false,
-  onUpdateTask,
-  onDeleteTask,
-  onDuplicateTask,
-  onMoveToTask,
-  onToggleComplete,
-  buckets = [],
-}: TaskRowProps) => {
+const TaskRow = memo(({ row, isPreview = false }: TaskRowProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [focusColumn, setFocusColumn] = useState<string | null>(null);
+  const { data: buckets = [] } = useBuckets();
+
+  // Keep all mutations in top level TaskRow rather than individual display/edit variants
+  const { mutate: updateTask } = useUpdateTask();
+  const { mutate: deleteTask } = useDeleteTask();
+  const duplicateTask = useDuplicateTask(); // duplicateTask uses createTask internally
+  const moveTaskToBucket = useMoveTaskToBucket();
 
   const handleClick = (e: React.MouseEvent) => {
     if (!(e.target instanceof HTMLElement)) return;
@@ -43,6 +43,16 @@ const TaskRow = ({
     setIsEditing(true);
   };
 
+  const toggleTaskCompletion = () => {
+    const currentStatus = row.original.status;
+    updateTask({
+      taskId: row.original.id,
+      updates: {
+        status: currentStatus === "completed" ? "not-started" : "completed",
+      },
+    });
+  };
+
   // Don't want preview row to be editable
   if (isPreview) {
     return <TaskDisplayRow row={row} isPreview />;
@@ -54,7 +64,7 @@ const TaskRow = ({
       existingTask={row.original}
       focusColumn={focusColumn}
       onSaveEditTask={(updatedTask) => {
-        onUpdateTask(row.original.id, updatedTask);
+        updateTask({ taskId: row.original.id, updates: updatedTask });
         setIsEditing(false);
         setFocusColumn(null);
       }}
@@ -67,13 +77,15 @@ const TaskRow = ({
     <TaskDisplayRow
       row={row}
       onClick={handleClick}
-      onDelete={onDeleteTask}
-      onDuplicate={onDuplicateTask}
-      onMoveTo={onMoveToTask}
-      onToggleComplete={onToggleComplete}
+      onDelete={() => deleteTask(row.original.id)}
+      onDuplicate={() => duplicateTask(row.original, buckets)}
+      onMoveTo={(bucketId) => moveTaskToBucket(row.original, bucketId)}
+      onToggleComplete={toggleTaskCompletion}
       buckets={buckets}
     />
   );
-};
+});
+
+TaskRow.displayName = "TaskRow";
 
 export default TaskRow;
