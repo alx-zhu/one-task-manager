@@ -109,22 +109,6 @@ const TaskDisplayRow = ({
     insertPosition === "below" && "border-b-2 border-b-blue-500"
   );
 
-  const handleDelete = () => {
-    onDelete?.();
-  };
-
-  const handleDuplicate = () => {
-    onDuplicate?.();
-  };
-
-  const handleMoveTo = (bucketId: string) => {
-    onMoveTo?.(bucketId);
-  };
-
-  const handleToggleComplete = () => {
-    onToggleComplete?.();
-  };
-
   return (
     <div
       key={row.id}
@@ -172,10 +156,10 @@ const TaskDisplayRow = ({
             buckets={buckets}
             currentBucketId={row.original.bucketId}
             currentStatus={row.original.status}
-            onDelete={handleDelete}
-            onDuplicate={handleDuplicate}
-            onMoveTo={handleMoveTo}
-            onToggleComplete={handleToggleComplete}
+            onDelete={onDelete}
+            onDuplicate={onDuplicate}
+            onMoveTo={onMoveTo}
+            onToggleComplete={onToggleComplete}
           />
         </div>
       )}

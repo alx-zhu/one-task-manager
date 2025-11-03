@@ -54,8 +54,7 @@ const TaskRow = memo(
     };
 
     const toggleTaskCompletion = () => {
-      const currentStatus = row.original.status;
-      if (currentStatus === "completed") {
+      if (isCompleted) {
         uncompleteTask(row.original, {
           onSuccess: () => {
             console.log(

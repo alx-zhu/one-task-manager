@@ -24,7 +24,8 @@ import {
   priorityLabels,
   badgeBaseClasses,
 } from "../cells/badgeStyles";
-import { format } from "date-fns/format";
+import { format } from "date-fns";
+import { DateCell } from "../cells/DateCell";
 
 interface TaskEditRowProps {
   bucketId: string;
@@ -252,21 +253,27 @@ const TaskEditRow = ({
         </Select>
       </div>
 
-      {/* Due Date */}
+      {/* Due Date / Completed Date */}
       <div
         className="px-3 py-2.5 flex items-center border-r border-gray-100 min-h-[42px]"
         style={{ width: "130px", minWidth: "130px" }}
       >
-        <Input
-          ref={dueDateInputRef}
-          type="date"
-          value={dueDate}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setDueDate(e.target.value)
-          }
-          onKeyDown={handleKeyDown}
-          className="text-sm h-7"
-        />
+        {existingTask?.status === "completed" && existingTask?.completedAt ? (
+          // Show read-only completion date for completed tasks
+          <DateCell date={existingTask.completedAt} isCompletedDate />
+        ) : (
+          // Editable due date input for active tasks
+          <Input
+            ref={dueDateInputRef}
+            type="date"
+            value={dueDate}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setDueDate(e.target.value)
+            }
+            onKeyDown={handleKeyDown}
+            className="text-sm h-7"
+          />
+        )}
       </div>
 
       {/* Tags */}

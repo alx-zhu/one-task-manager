@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import type { Task } from "@/types/task";
-import { taskColumns } from "./columns";
+import { completedTaskColumns } from "./columns";
 import { TaskTable } from "./TaskTable";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -120,7 +120,7 @@ function TimelineGroupSection({ label, tasks }: TimelineGroupSectionProps) {
       {/* Use TaskTable with custom row renderer */}
       <TaskTable
         data={tasks}
-        columns={taskColumns}
+        columns={completedTaskColumns}
         enableSorting={false}
         renderRow={(row) => <TaskRow key={row.id} row={row} isCompleted />}
       />

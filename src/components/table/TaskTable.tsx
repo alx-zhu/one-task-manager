@@ -69,7 +69,7 @@ export function TaskTable({
       );
     }
 
-    return <div className="group">{rows}</div>;
+    return <div>{rows}</div>;
   };
 
   return (
