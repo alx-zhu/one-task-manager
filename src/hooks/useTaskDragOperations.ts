@@ -18,7 +18,9 @@ export function useReorderTasksInBucket() {
   const bulkUpdate = useBulkUpdateTasks();
 
   return (task: Task, overId: string) => {
-    const tasks = queryClient.getQueryData<Task[]>(taskKeys.lists()) || [];
+    // Get active tasks (not completed)
+    const queryKey = taskKeys.list({ isComplete: false });
+    const tasks = queryClient.getQueryData<Task[]>(queryKey) || [];
 
     const bucketId = task.bucketId;
     if (!bucketId) return;
@@ -50,7 +52,7 @@ export function useReorderTasksInBucket() {
       return update ? { ...task, ...update } : task;
     });
 
-    queryClient.setQueryData(taskKeys.lists(), updatedTasks);
+    queryClient.setQueryData(queryKey, updatedTasks);
 
     // Then trigger the async mutation in the background
     bulkUpdate.mutate(updates);
@@ -66,7 +68,9 @@ export function useMoveTaskToBucket() {
   const bulkUpdate = useBulkUpdateTasks();
 
   return (task: Task, targetBucketId: string, targetTaskId?: string) => {
-    const tasks = queryClient.getQueryData<Task[]>(taskKeys.lists()) || [];
+    // Get active tasks (not completed)
+    const queryKey = taskKeys.list({ isComplete: false });
+    const tasks = queryClient.getQueryData<Task[]>(queryKey) || [];
     if (!task) return;
 
     // Get target bucket tasks (excluding dragged task, sorted by order)
@@ -129,7 +133,7 @@ export function useMoveTaskToBucket() {
       return update ? { ...task, ...update } : task;
     });
 
-    queryClient.setQueryData(taskKeys.lists(), updatedTasks);
+    queryClient.setQueryData(queryKey, updatedTasks);
 
     // Then trigger the async mutation in the background
     bulkUpdate.mutate(allUpdates);

@@ -1,13 +1,14 @@
 import { useState, useMemo } from "react";
-import type { Task } from "@/types/task";
+import type { Task, Bucket } from "@/types/task";
 import { completedTaskColumns } from "./columns";
 import { TaskTable } from "./TaskTable";
-import { ChevronDown } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import TaskRow from "./row/TaskRow";
 
 interface CompletedTasksSectionProps {
   tasks: Task[];
+  buckets: Bucket[];
 }
 
 interface TimelineGroup {
@@ -47,7 +48,7 @@ function groupTasksByTimeline(tasks: Task[]): TimelineGroup[] {
   return groups.filter((group) => group.tasks.length > 0);
 }
 
-export function CompletedTasksSection({ tasks }: CompletedTasksSectionProps) {
+export function CompletedTasksSection({ tasks, buckets }: CompletedTasksSectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   // Group tasks by timeline
@@ -58,43 +59,50 @@ export function CompletedTasksSection({ tasks }: CompletedTasksSectionProps) {
   }
 
   return (
-    <div className="rounded-lg overflow-hidden mb-4 bg-white border border-gray-200">
+    <div className="rounded-lg overflow-hidden mb-4 bg-white border border-gray-300">
       {/* Header */}
       <div
-        className="flex items-center justify-between cursor-pointer select-none px-5 py-3 hover:bg-gray-50 transition-colors border-b border-gray-200"
+        className="flex items-center justify-between cursor-pointer select-none px-5 py-3 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors border-b border-gray-300"
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
-        <div className="flex items-center gap-3">
-          <ChevronDown
+        <div className="flex items-center gap-3 flex-1">
+          <span
             className={cn(
               "text-base leading-none text-gray-400 transition-transform",
               isCollapsed && "-rotate-90"
             )}
-          />
-          <div className="flex items-center gap-3">
-            <h3 className="text-base font-semibold text-gray-700">
-              Completed Tasks
-            </h3>
-            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
-              {tasks.length}
-            </span>
-          </div>
+          >
+            ▼
+          </span>
+          <span className="font-medium text-sm">Completed Tasks</span>
+          <span className="px-2 py-0.5 text-xs font-medium rounded-xl bg-gray-200 text-gray-600">
+            {tasks.length}
+          </span>
         </div>
-        <div className="text-xs text-gray-500">Last 7 days</div>
       </div>
 
       {/* Timeline Groups */}
-      {!isCollapsed && (
-        <div>
-          {timelineGroups.map((group) => (
-            <TimelineGroupSection
-              key={group.label}
-              label={group.label}
-              tasks={group.tasks}
-            />
-          ))}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {!isCollapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div>
+              {timelineGroups.map((group) => (
+                <TimelineGroupSection
+                  key={group.label}
+                  label={group.label}
+                  tasks={group.tasks}
+                  buckets={buckets}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -102,15 +110,16 @@ export function CompletedTasksSection({ tasks }: CompletedTasksSectionProps) {
 interface TimelineGroupSectionProps {
   label: string;
   tasks: Task[];
+  buckets: Bucket[];
 }
 
-function TimelineGroupSection({ label, tasks }: TimelineGroupSectionProps) {
+function TimelineGroupSection({ label, tasks, buckets }: TimelineGroupSectionProps) {
   return (
-    <div className="border-b border-gray-200 last:border-b-0">
+    <div className="border-b border-gray-100 last:border-b-0">
       {/* Timeline Label */}
       <div className="px-5 py-2 bg-gray-50 border-b border-gray-200">
         <div className="flex items-center gap-2">
-          <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
             {label}
           </h4>
           <span className="text-xs text-gray-400">({tasks.length})</span>
@@ -122,7 +131,8 @@ function TimelineGroupSection({ label, tasks }: TimelineGroupSectionProps) {
         data={tasks}
         columns={completedTaskColumns}
         enableSorting={false}
-        renderRow={(row) => <TaskRow key={row.id} row={row} isCompleted />}
+        buckets={buckets}
+        renderRow={(row) => <TaskRow key={row.id} row={row} isCompleted buckets={buckets} />}
       />
     </div>
   );

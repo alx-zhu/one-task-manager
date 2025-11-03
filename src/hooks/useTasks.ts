@@ -28,7 +28,7 @@ export const taskKeys = {
  */
 export const useTasks = (isComplete: boolean = false) => {
   return useQuery({
-    queryKey: [...taskKeys.lists(), { isComplete }],
+    queryKey: taskKeys.list({ isComplete }),
     queryFn: () => tasksApi.fetchTasks(isComplete),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
