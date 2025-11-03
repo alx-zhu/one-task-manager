@@ -21,11 +21,17 @@ export interface Task {
 
   createdAt: Date;
   updatedAt: Date;
+  completedAt?: Date; // Undefined if not completed
 }
 
-export type NewTask = Omit<Task, "id">;
+export type NewTask = Omit<
+  Task,
+  "id" | "createdAt" | "updatedAt" | "completedAt"
+>;
 
-export type EditedTask = Partial<Task>;
+export type EditedTask = Partial<
+  Omit<Task, "id" | "createdAt" | "updatedAt" | "completedAt" | "userId">
+>;
 
 export interface Bucket {
   id: string;

@@ -9,7 +9,7 @@
  * - REST API: fetch('/api/tasks')
  */
 
-import type { Task, NewTask, EditedTask, TaskStatus } from "@/types/task";
+import type { Task, NewTask, EditedTask } from "@/types/task";
 import { simulateApiCall } from "./client";
 import { mockTasks } from "@/data/mockData";
 
@@ -54,9 +54,14 @@ const saveTasksToStorage = (tasks: Task[]): void => {
  * return data;
  * ```
  */
-export const fetchTasks = async (): Promise<Task[]> => {
+export const fetchTasks = async (
+  isComplete: boolean = false
+): Promise<Task[]> => {
   const tasks = getTasksFromStorage();
-  return simulateApiCall(tasks);
+  if (isComplete) {
+    return simulateApiCall(tasks.filter((task) => task.status === "completed"));
+  }
+  return simulateApiCall(tasks.filter((task) => task.status !== "completed"));
 };
 
 /**
@@ -82,6 +87,8 @@ export const createTask = async (newTask: NewTask): Promise<Task> => {
   const task: Task = {
     ...newTask,
     id,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   const updatedTasks = [...tasks, task];
@@ -111,9 +118,24 @@ export const updateTask = async (
 ): Promise<Task> => {
   const tasks = getTasksFromStorage();
 
-  const updatedTasks = tasks.map((task) =>
-    task.id === taskId ? { ...task, ...updates, updatedAt: new Date() } : task
-  );
+  const updatedTasks = tasks.map((task) => {
+    if (task.id === taskId) {
+      const updatedTask = { ...task, ...updates, updatedAt: new Date() };
+
+      // Set completedAt when marking as completed
+      if (updates.status === "completed" && !task.completedAt) {
+        updatedTask.completedAt = new Date();
+      }
+
+      // Clear completedAt when changing away from completed
+      if (updates.status && updates.status !== "completed") {
+        updatedTask.completedAt = undefined;
+      }
+
+      return updatedTask;
+    }
+    return task;
+  });
 
   saveTasksToStorage(updatedTasks);
 
@@ -183,22 +205,7 @@ export const moveTaskToBucket = async (
   newOrder: number
 ): Promise<Task> => {
   return updateTask(taskId, {
-    id: taskId,
     bucketId: targetBucketId,
     orderInBucket: newOrder,
-  });
-};
-
-/**
- * Toggle task completion status
- */
-export const toggleTaskCompletion = async (
-  taskId: string,
-  currentStatus: string
-): Promise<Task> => {
-  const newStatus = currentStatus === "completed" ? "not-started" : "completed";
-  return updateTask(taskId, {
-    id: taskId,
-    status: newStatus as TaskStatus,
   });
 };

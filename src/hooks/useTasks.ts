@@ -9,8 +9,9 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Task, NewTask, EditedTask, Bucket } from "@/types/task";
+import type { Task, NewTask, EditedTask } from "@/types/task";
 import * as tasksApi from "@/api/tasks.api";
+import { useBuckets } from "./useBuckets";
 
 // Query keys for cache management
 export const taskKeys = {
@@ -25,10 +26,10 @@ export const taskKeys = {
 /**
  * Fetch all tasks
  */
-export const useTasks = () => {
+export const useTasks = (isComplete: boolean = false) => {
   return useQuery({
-    queryKey: taskKeys.lists(),
-    queryFn: tasksApi.fetchTasks,
+    queryKey: [...taskKeys.lists(), { isComplete }],
+    queryFn: () => tasksApi.fetchTasks(isComplete),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
@@ -53,6 +54,8 @@ export const useCreateTask = () => {
         const optimisticTask: Task = {
           ...newTask,
           id: `temp-${Date.now()}`, // Temporary ID
+          createdAt: new Date(),
+          updatedAt: new Date(),
         };
         queryClient.setQueryData<Task[]>(taskKeys.lists(), [
           ...previousTasks,
@@ -201,50 +204,131 @@ export const useBulkUpdateTasks = () => {
 export function useDuplicateTask() {
   const queryClient = useQueryClient();
   const createTask = useCreateTask();
+  const { data: buckets = [] } = useBuckets();
 
-  return async (task: Task, buckets: Bucket[]) => {
-    const tasks = queryClient.getQueryData<Task[]>(taskKeys.lists()) || [];
+  return useMutation({
+    mutationFn: async (task: Task) => {
+      const tasks = queryClient.getQueryData<Task[]>(taskKeys.lists()) || [];
 
-    // Check if current bucket has capacity
-    const currentBucket = buckets.find((b) => b.id === task.bucketId);
-    const currentBucketTasks = tasks.filter(
-      (t) => t.bucketId === task.bucketId
-    );
-    const hasCapacity =
-      !currentBucket?.limit || currentBucketTasks.length < currentBucket.limit;
+      // Check if current bucket has capacity
+      const currentBucket = buckets.find((b) => b.id === task.bucketId);
+      const currentBucketTasks = tasks.filter(
+        (t) => t.bucketId === task.bucketId
+      );
+      const hasCapacity =
+        !currentBucket?.limit ||
+        currentBucketTasks.length < currentBucket.limit;
 
-    let targetBucketId = task.bucketId;
+      let targetBucketId = task.bucketId;
 
-    // If current bucket is full, find first available bucket
-    if (!hasCapacity) {
-      const availableBucket = buckets.find((bucket) => {
-        const bucketTaskCount = tasks.filter(
-          (t) => t.bucketId === bucket.id
-        ).length;
-        return !bucket.limit || bucketTaskCount < bucket.limit;
-      });
+      // If current bucket is full, find first available bucket
+      if (!hasCapacity) {
+        const availableBucket = buckets.find((bucket) => {
+          const bucketTaskCount = tasks.filter(
+            (t) => t.bucketId === bucket.id
+          ).length;
+          return !bucket.limit || bucketTaskCount < bucket.limit;
+        });
 
-      if (availableBucket) {
-        targetBucketId = availableBucket.id;
-      } else {
-        throw new Error("No available buckets with capacity for duplicate");
+        if (availableBucket) {
+          targetBucketId = availableBucket.id;
+        } else {
+          throw new Error("No available buckets with capacity for duplicate");
+        }
       }
-    }
 
-    const newTask: NewTask = {
-      title: `${task.title} (copy)`,
-      description: task.description,
-      status: task.status,
-      priority: task.priority,
-      tags: task.tags,
-      dueDate: task.dueDate,
-      bucketId: targetBucketId,
-      orderInBucket: tasks.filter((t) => t.bucketId === targetBucketId).length,
-      userId: task.userId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+      const newTask: NewTask = {
+        title: `${task.title} (copy)`,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        tags: task.tags,
+        dueDate: task.dueDate,
+        bucketId: targetBucketId,
+        orderInBucket: tasks.filter((t) => t.bucketId === targetBucketId)
+          .length,
+        userId: task.userId,
+      };
 
-    return createTask.mutateAsync(newTask);
-  };
+      return createTask.mutateAsync(newTask);
+    },
+    onSuccess: () => {
+      // Refetch to ensure UI is in sync
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Hook for uncompleting tasks with bucket capacity logic
+ */
+export function useUncompleteTask() {
+  const queryClient = useQueryClient();
+  const updateTask = useUpdateTask();
+  const { data: buckets = [] } = useBuckets();
+
+  return useMutation({
+    mutationFn: async (task: Task) => {
+      const tasks = queryClient.getQueryData<Task[]>(taskKeys.lists()) || [];
+
+      // Filter to only count incomplete tasks in buckets
+      const incompleteTasks = tasks.filter((t) => t.status !== "completed");
+
+      // Try to return task to its original bucket
+      const originalBucket = buckets.find((b) => b.id === task.bucketId);
+      const originalBucketTasks = incompleteTasks.filter(
+        (t) => t.bucketId === task.bucketId
+      );
+      const hasCapacity =
+        !originalBucket?.limit ||
+        originalBucketTasks.length < originalBucket.limit;
+
+      let targetBucketId = task.bucketId;
+      let targetOrderInBucket = originalBucketTasks.length;
+
+      // If original bucket is full, find first available bucket
+      if (!hasCapacity) {
+        console.warn(
+          `Original bucket "${originalBucket?.name}" is at capacity. Finding alternative bucket...`
+        );
+
+        const availableBucket = buckets.find((bucket) => {
+          const bucketTaskCount = incompleteTasks.filter(
+            (t) => t.bucketId === bucket.id
+          ).length;
+          return !bucket.limit || bucketTaskCount < bucket.limit;
+        });
+
+        if (availableBucket) {
+          targetBucketId = availableBucket.id;
+          targetOrderInBucket = incompleteTasks.filter(
+            (t) => t.bucketId === availableBucket.id
+          ).length;
+          console.warn(
+            `Task will be moved to "${availableBucket.name}" bucket instead.`
+          );
+        } else {
+          const error = new Error(
+            "Cannot uncomplete task - all buckets are at capacity. Please free up space first."
+          );
+          console.error(error.message);
+          throw error;
+        }
+      }
+
+      // Uncomplete the task
+      return updateTask.mutateAsync({
+        taskId: task.id,
+        updates: {
+          status: "in-progress",
+          bucketId: targetBucketId,
+          orderInBucket: targetOrderInBucket,
+        },
+      });
+    },
+    onSuccess: () => {
+      // Refetch to ensure UI is in sync
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+    },
+  });
 }
