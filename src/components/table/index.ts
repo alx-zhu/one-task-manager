@@ -1,6 +1,4 @@
 export { TaskTable } from "./TaskTable";
-export { BucketSection } from "./BucketSection";
-export { CompletedTasksSection } from "./CompletedTasksSection";
 export { taskColumns, completedTaskColumns } from "./columns";
 export { DragHandle } from "./cells/DragHandle";
 export { TaskCheckbox } from "./cells/TaskCheckbox";

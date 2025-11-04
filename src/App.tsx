@@ -9,7 +9,7 @@
  */
 
 import { useState } from "react";
-import { BucketSection, CompletedTasksSection } from "@/components/table";
+import { BucketSection, CompletedTasksSection } from "./components/bucket";
 import {
   DndContext,
   DragOverlay,

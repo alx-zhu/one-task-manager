@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Bucket, NewTask } from "@/types/task";
-import { TaskTable } from "./TaskTable";
-import { taskColumns } from "./columns";
+import { TaskTable } from "../table/TaskTable";
+import { taskColumns } from "../table/columns";
 import { AnimatePresence, motion } from "framer-motion";
 import { useDroppable, useDndContext } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,7 @@ import type {
   TaskDragDataType,
   DragDataType,
 } from "@/types/dnd";
-import TaskEditRow from "./row/TaskEditRow";
+import TaskEditRow from "../table/row/TaskEditRow";
 import { useCreateTask } from "@/hooks/useTasks";
 
 interface BucketSectionProps {

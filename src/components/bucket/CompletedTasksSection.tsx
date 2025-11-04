@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
 import type { Task } from "@/types/task";
-import { completedTaskColumns } from "./columns";
-import { TaskTable } from "./TaskTable";
+import { completedTaskColumns } from "../table/columns";
+import { TaskTable } from "../table/TaskTable";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import TaskRow from "./row/TaskRow";
+import TaskRow from "../table/row/TaskRow";
 
 interface CompletedTasksSectionProps {
   tasks: Task[];
