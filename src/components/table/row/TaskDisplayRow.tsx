@@ -30,7 +30,6 @@ const TaskDisplayRow = ({
   onToggleComplete,
   buckets = [],
 }: TaskDisplayRowProps) => {
-  console.log("Rendering TaskDisplayRow for task:", row.original.id);
   const [insertPosition, setInsertPosition] = useState<
     "above" | "below" | null
   >(null);

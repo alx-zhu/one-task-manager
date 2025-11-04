@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import type { Task, Bucket } from "@/types/task";
+import type { Task } from "@/types/task";
 import { completedTaskColumns } from "./columns";
 import { TaskTable } from "./TaskTable";
 import { AnimatePresence, motion } from "framer-motion";
@@ -8,7 +8,6 @@ import TaskRow from "./row/TaskRow";
 
 interface CompletedTasksSectionProps {
   tasks: Task[];
-  buckets: Bucket[];
 }
 
 interface TimelineGroup {
@@ -48,7 +47,7 @@ function groupTasksByTimeline(tasks: Task[]): TimelineGroup[] {
   return groups.filter((group) => group.tasks.length > 0);
 }
 
-export function CompletedTasksSection({ tasks, buckets }: CompletedTasksSectionProps) {
+export function CompletedTasksSection({ tasks }: CompletedTasksSectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   // Group tasks by timeline
@@ -96,7 +95,6 @@ export function CompletedTasksSection({ tasks, buckets }: CompletedTasksSectionP
                   key={group.label}
                   label={group.label}
                   tasks={group.tasks}
-                  buckets={buckets}
                 />
               ))}
             </div>
@@ -110,10 +108,9 @@ export function CompletedTasksSection({ tasks, buckets }: CompletedTasksSectionP
 interface TimelineGroupSectionProps {
   label: string;
   tasks: Task[];
-  buckets: Bucket[];
 }
 
-function TimelineGroupSection({ label, tasks, buckets }: TimelineGroupSectionProps) {
+function TimelineGroupSection({ label, tasks }: TimelineGroupSectionProps) {
   return (
     <div className="border-b border-gray-100 last:border-b-0">
       {/* Timeline Label */}
@@ -131,8 +128,7 @@ function TimelineGroupSection({ label, tasks, buckets }: TimelineGroupSectionPro
         data={tasks}
         columns={completedTaskColumns}
         enableSorting={false}
-        buckets={buckets}
-        renderRow={(row) => <TaskRow key={row.id} row={row} isCompleted buckets={buckets} />}
+        renderRow={(row) => <TaskRow key={row.id} row={row} isCompleted />}
       />
     </div>
   );
