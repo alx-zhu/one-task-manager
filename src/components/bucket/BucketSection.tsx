@@ -12,15 +12,19 @@ import type {
 } from "@/types/dnd";
 import TaskEditRow from "../table/row/TaskEditRow";
 import { useCreateTask } from "@/hooks/useTasks";
+import { BucketEditRow } from "./BucketEditRow";
+import { useUpdateBucket } from "@/hooks/useBuckets";
 
 interface BucketSectionProps {
   bucket: Bucket;
 }
 
 export function BucketSection({ bucket }: BucketSectionProps) {
+  const [isEditing, setIsEditing] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(bucket.collapsed);
   const [isAddingTask, setIsAddingTask] = useState(false);
   const { mutate: createTask } = useCreateTask();
+  const { mutate: updateBucket } = useUpdateBucket();
 
   const { active, over } = useDndContext();
 
@@ -157,12 +161,24 @@ export function BucketSection({ bucket }: BucketSectionProps) {
           className={getMenuClass()}
           onClick={(e) => {
             e.stopPropagation();
-            // Handle menu click
+            setIsEditing(true);
           }}
         >
           ⋮
         </span>
       </div>
+
+      {isEditing && (
+        <BucketEditRow
+          bucket={bucket}
+          onSave={(data) => {
+            // Call update bucket mutation
+            updateBucket({ bucketId: bucket.id, updates: data });
+            setIsEditing(false);
+          }}
+          onCancel={() => setIsEditing(false)}
+        />
+      )}
 
       {/* Table Content */}
       <AnimatePresence initial={false}>

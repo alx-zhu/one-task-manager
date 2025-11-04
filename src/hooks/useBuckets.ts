@@ -2,11 +2,12 @@
  * TanStack Query hooks for bucket data fetching
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as bucketsApi from "@/api/buckets.api";
 import { hydrateBucketsWithTasks } from "@/lib/utils";
 import { useMemo } from "react";
 import { useTasks } from "./useTasks";
+import type { Bucket } from "@/types/task";
 
 // Query keys for cache management
 export const bucketKeys = {
@@ -41,4 +42,43 @@ export const useHydratedBuckets = () => {
     data: hydratedBuckets,
     isLoading: bucketsLoading || tasksLoading,
   };
+};
+
+export const useCreateBucket = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: bucketsApi.createBucket,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bucketKeys.lists() });
+    },
+  });
+};
+
+export const useUpdateBucket = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      bucketId,
+      updates,
+    }: {
+      bucketId: string;
+      updates: Partial<Bucket>;
+    }) => bucketsApi.updateBucket(bucketId, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bucketKeys.lists() });
+    },
+  });
+};
+
+export const useDeleteBucket = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (bucketId: string) => bucketsApi.deleteBucket(bucketId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bucketKeys.lists() });
+    },
+  });
 };

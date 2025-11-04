@@ -6,7 +6,7 @@ import type { Bucket } from "@/types/task";
 
 interface BucketEditRowProps {
   bucket?: Bucket;
-  onSave: (data: { name: string; limit?: number; order: number }) => void;
+  onSave: (data: { name: string; limit?: number }) => void;
   onCancel: () => void;
 }
 
@@ -17,8 +17,8 @@ export function BucketEditRow({
 }: BucketEditRowProps) {
   const [name, setName] = useState(bucket?.name || "");
   const [limit, setLimit] = useState(bucket?.limit?.toString() || "");
-  const [order, setOrder] = useState(bucket?.order.toString() || "0");
   const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -33,10 +33,25 @@ export function BucketEditRow({
       return;
     }
 
+    // Validate limit against current task count
+    const newLimit = limit ? parseInt(limit) : undefined;
+    if (bucket && newLimit !== undefined) {
+      const currentTaskCount = bucket.tasks.length;
+      if (newLimit < currentTaskCount) {
+        setShowError(true);
+        setErrorMessage(
+          `Cannot set limit to ${newLimit}. This bucket has ${currentTaskCount} tasks. ` +
+            `Please move ${currentTaskCount - newLimit} task${
+              currentTaskCount - newLimit > 1 ? "s" : ""
+            } first.`
+        );
+        return;
+      }
+    }
+
     onSave({
       name: name.trim(),
-      limit: limit ? parseInt(limit) : undefined,
-      order: parseInt(order) || 0,
+      limit: newLimit,
     });
   };
 
@@ -86,20 +101,7 @@ export function BucketEditRow({
             onChange={(e) => setLimit(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="No limit"
-          />
-        </div>
-
-        {/* Order Input */}
-        <div className="w-24">
-          <label className="text-xs font-medium text-gray-700 mb-1 block">
-            Order
-          </label>
-          <Input
-            type="number"
-            min="0"
-            value={order}
-            onChange={(e) => setOrder(e.target.value)}
-            onKeyDown={handleKeyDown}
+            className={showError ? "border-red-500" : ""}
           />
         </div>
 
@@ -125,6 +127,9 @@ export function BucketEditRow({
           </Button>
         </div>
       </div>
+      {showError && errorMessage && (
+        <div className="text-sm text-red-600 mt-2">{errorMessage}</div>
+      )}
     </div>
   );
 }
