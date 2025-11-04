@@ -8,8 +8,8 @@
  * - Ready for Supabase migration
  */
 
-import { useState, useMemo } from "react";
-import { BucketSection } from "@/components/table";
+import { useState } from "react";
+import { BucketSection, CompletedTasksSection } from "@/components/table";
 import {
   DndContext,
   DragOverlay,
@@ -23,29 +23,28 @@ import {
 } from "@dnd-kit/core";
 import { TaskRowPreview } from "./components/table/row/TaskPreviewRow";
 import type { Task } from "./types/task";
-import { hydrateBucketsWithTasks } from "./lib/utils";
 import type { DragDataType } from "./types/dnd";
-import { useTasks } from "./hooks/useTasks";
-import { useBuckets } from "./hooks/useBuckets";
+import { useHydratedBuckets } from "./hooks/useBuckets";
 import {
   useMoveTaskToBucket,
   useReorderTasksInBucket,
 } from "./hooks/useTaskDragOperations";
+import { useTasks } from "./hooks/useTasks";
 
 function App() {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
 
   // Fetch data using React Query
-  const { data: tasks = [], isLoading: tasksLoading } = useTasks();
-  const { data: buckets = [], isLoading: bucketsLoading } = useBuckets();
+  const { data: hydratedBuckets = [], isLoading } = useHydratedBuckets();
+  const { data: completedTasks = [] } = useTasks(true);
   const moveTaskToBucket = useMoveTaskToBucket();
   const reorderTasksInBucket = useReorderTasksInBucket();
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
+      // activationConstraint: {
+      //   distance: 8,
+      // },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
@@ -53,11 +52,6 @@ function App() {
         tolerance: 5,
       },
     })
-  );
-
-  const hydratedBuckets = useMemo(
-    () => hydrateBucketsWithTasks(buckets, tasks),
-    [buckets, tasks]
   );
 
   const canMoveTaskToBucket = (
@@ -131,7 +125,7 @@ function App() {
   };
 
   // Show loading state
-  if (tasksLoading || bucketsLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-500">Loading...</div>
@@ -197,6 +191,11 @@ function App() {
             ) : null}
           </DragOverlay>
         </DndContext>
+
+        {/* Completed Tasks Section - Always show the completed tasks section at the bottom */}
+        <div className="mt-10">
+          <CompletedTasksSection tasks={completedTasks} />
+        </div>
       </div>
     </div>
   );

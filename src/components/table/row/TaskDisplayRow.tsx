@@ -10,6 +10,7 @@ import ActionsCell from "../cells/ActionsCell";
 interface TaskDisplayRowProps {
   row: Row<Task>;
   isPreview?: boolean;
+  isCompleted?: boolean;
   onClick?: (e: React.MouseEvent) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
@@ -21,6 +22,7 @@ interface TaskDisplayRowProps {
 const TaskDisplayRow = ({
   row,
   isPreview = false,
+  isCompleted = false,
   onClick,
   onDelete,
   onDuplicate,
@@ -46,7 +48,7 @@ const TaskDisplayRow = ({
       task: row.original,
       type: "task",
     } satisfies TaskDragDataType,
-    disabled: isPreview,
+    disabled: isPreview || isCompleted,
   });
 
   const activeData = active?.data?.current as TaskDragDataType;
@@ -97,7 +99,7 @@ const TaskDisplayRow = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.3 : 1,
+    opacity: isDragging ? 0.3 : isCompleted ? 0.6 : 1,
   };
 
   const rowClasses = cn(
@@ -106,22 +108,6 @@ const TaskDisplayRow = ({
     insertPosition === "above" && "border-t-2 border-t-blue-500",
     insertPosition === "below" && "border-b-2 border-b-blue-500"
   );
-
-  const handleDelete = () => {
-    onDelete?.();
-  };
-
-  const handleDuplicate = () => {
-    onDuplicate?.();
-  };
-
-  const handleMoveTo = (bucketId: string) => {
-    onMoveTo?.(bucketId);
-  };
-
-  const handleToggleComplete = () => {
-    onToggleComplete?.();
-  };
 
   return (
     <div
@@ -170,10 +156,10 @@ const TaskDisplayRow = ({
             buckets={buckets}
             currentBucketId={row.original.bucketId}
             currentStatus={row.original.status}
-            onDelete={handleDelete}
-            onDuplicate={handleDuplicate}
-            onMoveTo={handleMoveTo}
-            onToggleComplete={handleToggleComplete}
+            onDelete={onDelete}
+            onDuplicate={onDuplicate}
+            onMoveTo={onMoveTo}
+            onToggleComplete={onToggleComplete}
           />
         </div>
       )}

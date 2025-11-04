@@ -3,22 +3,35 @@ import {
   getCoreRowModel,
   flexRender,
   type ColumnDef,
+  type Row,
 } from "@tanstack/react-table";
-import type { Task, Bucket } from "@/types/task";
+import type { Task } from "@/types/task";
 import TaskRow from "./row/TaskRow";
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import type { ReactNode } from "react";
 
 interface TaskTableProps {
   data: Task[];
   columns: ColumnDef<Task>[];
-  buckets?: Bucket[];
+  /** Custom row renderer. If not provided, defaults to TaskRow */
+  renderRow?: (row: Row<Task>) => ReactNode;
+  /** Whether to wrap rows in SortableContext (for drag & drop). Defaults to true */
+  enableSorting?: boolean;
+  /** Custom empty state message */
+  emptyMessage?: string;
 }
 
 // Keep TaskTable only responsible for rendering the table structure
-export function TaskTable({ data, columns }: TaskTableProps) {
+export function TaskTable({
+  data,
+  columns,
+  renderRow,
+  enableSorting = true,
+  emptyMessage = "No tasks in this bucket.",
+}: TaskTableProps) {
   const table = useReactTable({
     data,
     columns,
@@ -26,6 +39,38 @@ export function TaskTable({ data, columns }: TaskTableProps) {
   });
 
   const isEmpty = data.length === 0;
+
+  // Default row renderer if not provided
+  const defaultRenderRow = (row: Row<Task>) => (
+    <TaskRow key={row.id} row={row} />
+  );
+  const rowRenderer = renderRow || defaultRenderRow;
+
+  // Render rows with optional sortable context
+  const renderRows = () => {
+    if (isEmpty) {
+      return (
+        <div className="p-8 text-center text-gray-400 text-sm border-2 border-dashed border-gray-200 m-4 rounded-lg">
+          {emptyMessage}
+        </div>
+      );
+    }
+
+    const rows = table.getRowModel().rows.map((row) => rowRenderer(row));
+
+    if (enableSorting) {
+      return (
+        <SortableContext
+          items={table.getRowModel().rows.map((row) => row.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div>{rows}</div>
+        </SortableContext>
+      );
+    }
+
+    return <div>{rows}</div>;
+  };
 
   return (
     <>
@@ -63,22 +108,7 @@ export function TaskTable({ data, columns }: TaskTableProps) {
       </div>
 
       {/* Table Body */}
-      <SortableContext
-        items={table.getRowModel().rows.map((row) => row.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        {isEmpty ? (
-          <div className="p-8 text-center text-gray-400 text-sm border-2 border-dashed border-gray-200 m-4 rounded-lg">
-            No tasks in this bucket.
-          </div>
-        ) : (
-          <div>
-            {table.getRowModel().rows.map((row) => (
-              <TaskRow key={row.id} row={row} />
-            ))}
-          </div>
-        )}
-      </SortableContext>
+      {renderRows()}
     </>
   );
 }
