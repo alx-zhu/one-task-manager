@@ -145,30 +145,7 @@ export function BucketSection({ bucket }: BucketSectionProps) {
   return (
     <div ref={setNodeRef} className={getContainerClass()}>
       {/* Bucket Header */}
-      <div
-        className={getHeaderClass()}
-        onClick={() => setIsCollapsed(!isCollapsed)}
-      >
-        <div className="flex items-center gap-3 flex-1">
-          <span className={getChevronClass()}>▼</span>
-          <span className="font-medium text-sm">{bucket.name}</span>
-          <span className={getCountClass()}>
-            {bucket.tasks.length}
-            {bucket.limit && `/${bucket.limit}`}
-          </span>
-        </div>
-        <span
-          className={getMenuClass()}
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsEditing(true);
-          }}
-        >
-          ⋮
-        </span>
-      </div>
-
-      {isEditing && (
+      {isEditing ? (
         <BucketEditRow
           bucket={bucket}
           onSave={(data) => {
@@ -178,6 +155,29 @@ export function BucketSection({ bucket }: BucketSectionProps) {
           }}
           onCancel={() => setIsEditing(false)}
         />
+      ) : (
+        <div
+          className={getHeaderClass()}
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        >
+          <div className="flex items-center gap-3 flex-1">
+            <span className={getChevronClass()}>▼</span>
+            <span className="font-medium text-sm">{bucket.name}</span>
+            <span className={getCountClass()}>
+              {bucket.tasks.length}
+              {bucket.limit && `/${bucket.limit}`}
+            </span>
+          </div>
+          <span
+            className={getMenuClass()}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditing(true);
+            }}
+          >
+            ⋮
+          </span>
+        </div>
       )}
 
       {/* Table Content */}
