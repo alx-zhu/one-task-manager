@@ -72,6 +72,17 @@ export const useUpdateBucket = () => {
   });
 };
 
+export const useBulkUpdateBuckets = () => {
+  const queryClient = useQueryClient();
+  console.log("useBulkUpdateBuckets called");
+  return useMutation({
+    mutationFn: bucketsApi.bulkUpdateBuckets,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bucketKeys.lists() });
+    },
+  });
+};
+
 export const useDeleteBucket = () => {
   const queryClient = useQueryClient();
 
@@ -81,4 +92,42 @@ export const useDeleteBucket = () => {
       queryClient.invalidateQueries({ queryKey: bucketKeys.lists() });
     },
   });
+};
+
+export const useMoveBucket = () => {
+  const queryClient = useQueryClient();
+  const bulkUpdateBuckets = useBulkUpdateBuckets();
+
+  return (bucketId: string, direction: "up" | "down") => {
+    const buckets =
+      queryClient.getQueryData<Bucket[]>(bucketKeys.lists()) || [];
+    const sorted = [...buckets].sort((a, b) => a.order - b.order);
+
+    const currentIndex = sorted.findIndex((b) => b.id === bucketId);
+    if (currentIndex === -1) return;
+
+    const targetIndex =
+      direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= sorted.length) return;
+
+    // Swap order values
+    const updates = [
+      { id: sorted[currentIndex].id, order: sorted[targetIndex].order },
+      { id: sorted[targetIndex].id, order: sorted[currentIndex].order },
+    ];
+
+    console.log("useMoveBucket - updates:", updates);
+
+    // Optimistic update
+    const updateMap = new Map(updates.map((u) => [u.id, u]));
+    const optimisticBuckets = buckets.map((bucket) => {
+      const update = updateMap.get(bucket.id);
+      return update ? { ...bucket, ...update } : bucket;
+    });
+
+    queryClient.setQueryData(bucketKeys.lists(), optimisticBuckets);
+
+    // Persist to backend
+    bulkUpdateBuckets.mutate(updates);
+  };
 };

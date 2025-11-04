@@ -125,6 +125,25 @@ export const updateBucket = async (
   return simulateApiCall(updatedBucket);
 };
 
+export const bulkUpdateBuckets = async (
+  updates: Partial<Bucket>[]
+): Promise<Bucket[]> => {
+  const buckets = getBucketsFromStorage();
+
+  const updateMap = new Map(updates.map((u) => [u.id, u]));
+
+  const updatedBuckets = buckets.map((bucket) => {
+    const update = updateMap.get(bucket.id);
+    return update ? { ...bucket, ...update, updatedAt: new Date() } : bucket;
+  });
+
+  console.log("bulkUpdateBuckets - updatedBuckets:", updatedBuckets);
+
+  saveBucketsToStorage(updatedBuckets);
+
+  return simulateApiCall(updatedBuckets.filter((b) => updateMap.has(b.id!)));
+};
+
 /**
  * Delete a bucket
  *

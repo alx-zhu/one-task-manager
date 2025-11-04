@@ -24,7 +24,7 @@ import {
 import { TaskRowPreview } from "./components/table/row/TaskPreviewRow";
 import type { Task } from "./types/task";
 import type { DragDataType } from "./types/dnd";
-import { useHydratedBuckets } from "./hooks/useBuckets";
+import { useHydratedBuckets, useMoveBucket } from "./hooks/useBuckets";
 import {
   useMoveTaskToBucket,
   useReorderTasksInBucket,
@@ -39,6 +39,7 @@ function App() {
   const { data: completedTasks = [] } = useTasks(true);
   const moveTaskToBucket = useMoveTaskToBucket();
   const reorderTasksInBucket = useReorderTasksInBucket();
+  const moveBucket = useMoveBucket();
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -151,7 +152,7 @@ function App() {
           <div className="text-lg font-medium text-gray-900">
             Priority Buckets
           </div>
-          <div className="flex gap-3">
+          {/* <div className="flex gap-3">
             <button className="px-4 py-2 text-sm border border-gray-200 bg-white rounded-md font-medium transition-colors hover:bg-gray-50 hover:border-gray-300">
               + Add Column
             </button>
@@ -161,7 +162,7 @@ function App() {
             <button className="px-4 py-2 text-sm bg-gray-900 text-white rounded-md font-medium transition-colors hover:bg-gray-700">
               + Add Task
             </button>
-          </div>
+          </div> */}
         </div>
 
         {/* Buckets */}
@@ -173,8 +174,15 @@ function App() {
           collisionDetection={pointerWithin}
         >
           <div>
-            {hydratedBuckets.map((bucket) => (
-              <BucketSection key={bucket.id} bucket={bucket} />
+            {hydratedBuckets.map((bucket, index) => (
+              <BucketSection
+                key={bucket.id}
+                bucket={bucket}
+                isFirst={index === 0}
+                isLast={index === hydratedBuckets.length - 1}
+                onMoveUp={() => moveBucket(bucket.id, "up")}
+                onMoveDown={() => moveBucket(bucket.id, "down")}
+              />
             ))}
           </div>
 

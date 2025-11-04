@@ -14,12 +14,30 @@ import TaskEditRow from "../table/row/TaskEditRow";
 import { useCreateTask } from "@/hooks/useTasks";
 import { BucketEditRow } from "./BucketEditRow";
 import { useUpdateBucket } from "@/hooks/useBuckets";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { ChevronUp, ChevronDown, Pencil } from "lucide-react";
 
 interface BucketSectionProps {
   bucket: Bucket;
+  isFirst?: boolean;
+  isLast?: boolean;
+  onMoveUp?: (bucketId: string) => void;
+  onMoveDown?: (bucketId: string) => void;
 }
 
-export function BucketSection({ bucket }: BucketSectionProps) {
+export function BucketSection({
+  bucket,
+  isFirst,
+  isLast,
+  onMoveUp,
+  onMoveDown,
+}: BucketSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(bucket.collapsed);
   const [isAddingTask, setIsAddingTask] = useState(false);
@@ -168,15 +186,56 @@ export function BucketSection({ bucket }: BucketSectionProps) {
               {bucket.limit && `/${bucket.limit}`}
             </span>
           </div>
-          <span
-            className={getMenuClass()}
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
-          >
-            ⋮
-          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={getMenuClass()}
+                onClick={(e) => e.stopPropagation()}
+              >
+                ⋮
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMoveUp?.(bucket.id);
+                  console.log("move up clicked");
+                }}
+                disabled={isFirst}
+                className="cursor-pointer"
+              >
+                <ChevronUp className="w-4 h-4" />
+                <span>Move Up</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMoveDown?.(bucket.id);
+                  console.log("move down clicked");
+                }}
+                disabled={isLast}
+                className="cursor-pointer"
+              >
+                <ChevronDown className="w-4 h-4" />
+                <span>Move Down</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                }}
+                className="cursor-pointer"
+              >
+                <Pencil className="w-4 h-4" />
+                <span>Edit Bucket</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
 
