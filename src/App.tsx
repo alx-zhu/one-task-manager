@@ -9,7 +9,11 @@
  */
 
 import { useState } from "react";
-import { BucketSection, CompletedTasksSection } from "./components/bucket";
+import {
+  BucketSection,
+  CompletedTasksSection,
+  BucketCreateSection,
+} from "./components/bucket";
 import {
   DndContext,
   DragOverlay,
@@ -24,7 +28,11 @@ import {
 import { TaskRowPreview } from "./components/table/row/TaskPreviewRow";
 import type { Task } from "./types/task";
 import type { DragDataType } from "./types/dnd";
-import { useHydratedBuckets, useMoveBucket } from "./hooks/useBuckets";
+import {
+  useHydratedBuckets,
+  useMoveBucket,
+  useCreateBucket,
+} from "./hooks/useBuckets";
 import {
   useMoveTaskToBucket,
   useReorderTasksInBucket,
@@ -33,6 +41,7 @@ import { useTasks } from "./hooks/useTasks";
 
 function App() {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const [isAddingBucket, setIsAddingBucket] = useState(false);
 
   // Fetch data using React Query
   const { data: hydratedBuckets = [], isLoading } = useHydratedBuckets();
@@ -40,6 +49,7 @@ function App() {
   const moveTaskToBucket = useMoveTaskToBucket();
   const reorderTasksInBucket = useReorderTasksInBucket();
   const moveBucket = useMoveBucket();
+  const { mutate: createBucket } = useCreateBucket();
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -125,6 +135,40 @@ function App() {
     setDraggedTask(null);
   };
 
+  const handleAddBucketClick = () => {
+    setIsAddingBucket(true);
+  };
+
+  const handleSaveNewBucket = (data: { name: string; limit?: number }) => {
+    // Calculate the next order number
+    const maxOrder = Math.max(...hydratedBuckets.map((b) => b.order), -1);
+
+    createBucket(
+      {
+        name: data.name,
+        limit: data.limit,
+        order: maxOrder + 1,
+        collapsed: false,
+        userId: "user-1", // TODO: Get from auth
+      },
+      {
+        onSuccess: () => {
+          setIsAddingBucket(false);
+        },
+        onError: (error) => {
+          console.error("Failed to create bucket:", error);
+          alert(
+            error instanceof Error ? error.message : "Failed to create bucket"
+          );
+        },
+      }
+    );
+  };
+
+  const handleCancelAddBucket = () => {
+    setIsAddingBucket(false);
+  };
+
   // Show loading state
   if (isLoading) {
     return (
@@ -184,6 +228,27 @@ function App() {
                 onMoveDown={() => moveBucket(bucket.id, "down")}
               />
             ))}
+
+            {/* New Bucket Section */}
+            {isAddingBucket && (
+              <BucketCreateSection
+                onSave={handleSaveNewBucket}
+                onCancel={handleCancelAddBucket}
+              />
+            )}
+
+            {/* Add Bucket Button */}
+            {!isAddingBucket && (
+              <div className="mb-4">
+                <button
+                  onClick={handleAddBucketClick}
+                  className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-50 border-2 border-dashed border-gray-200 hover:border-gray-300 w-full justify-center"
+                >
+                  <span className="text-lg">+</span>
+                  <span className="font-medium">Add Bucket</span>
+                </button>
+              </div>
+            )}
           </div>
 
           <DragOverlay

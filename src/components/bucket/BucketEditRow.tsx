@@ -178,20 +178,18 @@ export function BucketEditRow({
         </div>
       </div>
 
-      {/* Action Buttons */}
-      {bucket && (
-        <BucketActionsCell
-          mode="edit"
-          bucket={bucket}
-          isFirst={isFirst}
-          isLast={isLast}
-          onMoveUp={onMoveUp}
-          onMoveDown={onMoveDown}
-          onSave={handleSave}
-          onCancel={onCancel}
-          onDelete={handleDeleteBucket}
-        />
-      )}
+      {/* Action Buttons - always shown in edit mode */}
+      <BucketActionsCell
+        mode="edit"
+        bucket={bucket}
+        isFirst={isFirst}
+        isLast={isLast}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onSave={handleSave}
+        onCancel={onCancel}
+        onDelete={bucket ? handleDeleteBucket : undefined}
+      />
 
       {/* Error Message Tooltip */}
       {showError && errorMessage && (

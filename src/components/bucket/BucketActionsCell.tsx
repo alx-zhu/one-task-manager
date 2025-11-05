@@ -20,7 +20,7 @@ import { Button } from "../ui/button";
 
 interface BucketActionsCellProps {
   mode: "display" | "edit";
-  bucket: Bucket;
+  bucket?: Bucket; // Make bucket optional for new bucket creation
   // Display mode props
   isFirst?: boolean;
   isLast?: boolean;
@@ -51,10 +51,10 @@ export function BucketActionsCell({
     return cn(
       "h-7 w-7 flex items-center justify-center rounded transition-colors",
       disabled
-        ? bucket.isOneThing
+        ? bucket?.isOneThing
           ? "text-white/20 cursor-not-allowed"
           : "text-gray-200 cursor-not-allowed"
-        : bucket.isOneThing
+        : bucket?.isOneThing
         ? "text-white/70 hover:text-white hover:bg-white/10"
         : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
     );
@@ -70,7 +70,7 @@ export function BucketActionsCell({
       onClick={(e) => e.stopPropagation()}
     >
       {/* Move Up/Down buttons - always shown when not isOneThing */}
-      {!bucket.isOneThing && (
+      {bucket && !bucket.isOneThing && (
         <>
           <button
             className={getMenuClass(isFirst)}
@@ -134,7 +134,7 @@ export function BucketActionsCell({
           </button>
 
           {/* More Options Dropdown - only shown in display mode */}
-          {!bucket.isOneThing && (
+          {bucket && !bucket.isOneThing && (
             <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <button
