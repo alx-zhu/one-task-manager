@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
 import type { Task } from "@/types/task";
-import { completedTaskColumns } from "./columns";
-import { TaskTable } from "./TaskTable";
+import { completedTaskColumns } from "../table/columns";
+import { TaskTable } from "../table/TaskTable";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import TaskRow from "./row/TaskRow";
+import TaskRow from "../table/row/TaskRow";
 
 interface CompletedTasksSectionProps {
   tasks: Task[];
@@ -123,13 +123,17 @@ function TimelineGroupSection({ label, tasks }: TimelineGroupSectionProps) {
         </div>
       </div>
 
-      {/* Use TaskTable with custom row renderer */}
-      <TaskTable
-        data={tasks}
-        columns={completedTaskColumns}
-        enableSorting={false}
-        renderRow={(row) => <TaskRow key={row.id} row={row} isCompleted />}
-      />
+      {/* Use TaskTable with custom row renderer - wrapped in scrollable container */}
+      <div className="overflow-x-auto">
+        <div className="min-w-max">
+          <TaskTable
+            data={tasks}
+            columns={completedTaskColumns}
+            enableSorting={false}
+            renderRow={(row) => <TaskRow key={row.id} row={row} isCompleted />}
+          />
+        </div>
+      </div>
     </div>
   );
 }

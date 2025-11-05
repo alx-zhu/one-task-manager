@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Bucket, NewTask } from "@/types/task";
-import { TaskTable } from "./TaskTable";
-import { taskColumns } from "./columns";
+import { TaskTable } from "../table/TaskTable";
+import { taskColumns } from "../table/columns";
 import { AnimatePresence, motion } from "framer-motion";
 import { useDroppable, useDndContext } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
@@ -10,17 +10,33 @@ import type {
   TaskDragDataType,
   DragDataType,
 } from "@/types/dnd";
-import TaskEditRow from "./row/TaskEditRow";
+import TaskEditRow from "../table/row/TaskEditRow";
 import { useCreateTask } from "@/hooks/useTasks";
+import { BucketEditRow } from "./BucketEditRow";
+import { useUpdateBucket, useDeleteBucket } from "@/hooks/useBuckets";
+import { BucketActionsCell } from "./BucketActionsCell";
 
 interface BucketSectionProps {
   bucket: Bucket;
+  isFirst?: boolean;
+  isLast?: boolean;
+  onMoveUp?: (bucketId: string) => void;
+  onMoveDown?: (bucketId: string) => void;
 }
 
-export function BucketSection({ bucket }: BucketSectionProps) {
+export function BucketSection({
+  bucket,
+  isFirst,
+  isLast,
+  onMoveUp,
+  onMoveDown,
+}: BucketSectionProps) {
+  const [isEditing, setIsEditing] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(bucket.collapsed);
   const [isAddingTask, setIsAddingTask] = useState(false);
   const { mutate: createTask } = useCreateTask();
+  const { mutate: updateBucket } = useUpdateBucket();
+  const { mutate: deleteBucket } = useDeleteBucket();
 
   const { active, over } = useDndContext();
 
@@ -83,7 +99,7 @@ export function BucketSection({ bucket }: BucketSectionProps) {
 
   const getHeaderClass = () => {
     return cn(
-      "flex items-center justify-between cursor-pointer select-none transition-colors border-b",
+      "flex items-center justify-between cursor-pointer select-none transition-colors border-b group/bucket",
       bucket.isOneThing
         ? "px-5 py-4 bg-gray-900 text-white hover:bg-gray-800 border-gray-700"
         : "px-5 py-3 hover:bg-gray-50 border-gray-200"
@@ -103,15 +119,6 @@ export function BucketSection({ bucket }: BucketSectionProps) {
       return `px-2 py-0.5 rounded-xl text-xs font-medium bg-white/20 text-white`;
     }
     return `px-2 py-0.5 rounded-xl text-xs font-medium ${getBucketCountClass()}`;
-  };
-
-  const getMenuClass = () => {
-    return cn(
-      "text-xl leading-none cursor-pointer p-1",
-      bucket.isOneThing
-        ? "text-white/70 hover:text-white"
-        : "text-gray-400 hover:text-gray-600"
-    );
   };
 
   const handleAddTaskClick = () => {
@@ -136,33 +143,62 @@ export function BucketSection({ bucket }: BucketSectionProps) {
     setIsAddingTask(false);
   };
 
+  const handleDeleteBucket = () => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${bucket.name}"? This action cannot be undone.`
+      )
+    ) {
+      deleteBucket(bucket.id);
+    }
+  };
+
   const canAddTask = !bucket.limit || bucket.tasks.length < bucket.limit;
 
   return (
     <div ref={setNodeRef} className={getContainerClass()}>
       {/* Bucket Header */}
-      <div
-        className={getHeaderClass()}
-        onClick={() => setIsCollapsed(!isCollapsed)}
-      >
-        <div className="flex items-center gap-3 flex-1">
-          <span className={getChevronClass()}>▼</span>
-          <span className="font-medium text-sm">{bucket.name}</span>
-          <span className={getCountClass()}>
-            {bucket.tasks.length}
-            {bucket.limit && `/${bucket.limit}`}
-          </span>
-        </div>
-        <span
-          className={getMenuClass()}
-          onClick={(e) => {
-            e.stopPropagation();
-            // Handle menu click
+      {isEditing ? (
+        <BucketEditRow
+          bucket={bucket}
+          onSave={(data) => {
+            // Call update bucket mutation
+            updateBucket({ bucketId: bucket.id, updates: data });
+            setIsEditing(false);
           }}
+          onCancel={() => setIsEditing(false)}
+          isFirst={isFirst}
+          isLast={isLast}
+          onMoveUp={onMoveUp}
+          onMoveDown={onMoveDown}
+        />
+      ) : (
+        <div
+          className={getHeaderClass()}
+          onClick={() => setIsCollapsed(!isCollapsed)}
         >
-          ⋮
-        </span>
-      </div>
+          <div className="flex items-center gap-3 flex-1">
+            <span className={getChevronClass()}>▼</span>
+            <span className="font-medium text-sm">{bucket.name}</span>
+            <span className={getCountClass()}>
+              {bucket.tasks.length}
+              {bucket.limit && `/${bucket.limit}`}
+            </span>
+          </div>
+
+          {/* Action Buttons */}
+          <BucketActionsCell
+            mode="display"
+            bucket={bucket}
+            isFirst={isFirst}
+            isLast={isLast}
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            onEdit={() => setIsEditing(true)}
+            onDelete={handleDeleteBucket}
+          />
+        </div>
+      )}
 
       {/* Table Content */}
       <AnimatePresence initial={false}>
@@ -175,6 +211,7 @@ export function BucketSection({ bucket }: BucketSectionProps) {
           >
             <div
               className={cn(
+                "overflow-x-auto",
                 isOver &&
                   overData?.type === "bucket" &&
                   // Don't add border if it is the same bucket as the draggedTask
@@ -182,7 +219,9 @@ export function BucketSection({ bucket }: BucketSectionProps) {
                   "border-b-2 border-b-blue-500"
               )}
             >
-              <TaskTable data={bucket.tasks} columns={taskColumns} />
+              <div className="min-w-max">
+                <TaskTable data={bucket.tasks} columns={taskColumns} />
+              </div>
             </div>
 
             {isAddingTask && (

@@ -17,7 +17,7 @@ const MOCK_DELAY = 300;
  */
 export const simulateApiCall = <T>(data: T): Promise<T> => {
   return new Promise((resolve) => {
-    setTimeout(() => resolve(data), MOCK_DELAY);
+    resolve(data);
   });
 };
 

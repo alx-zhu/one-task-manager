@@ -10,7 +10,7 @@ import {
   useUncompleteTask,
 } from "@/hooks/useTasks";
 import { useMoveTaskToBucket } from "@/hooks/useTaskDragOperations";
-import { useBuckets } from "@/hooks/useBuckets";
+import { useHydratedBuckets } from "@/hooks/useBuckets";
 
 interface TaskRowProps {
   row: Row<Task>;
@@ -23,7 +23,7 @@ const TaskRow = memo(
   ({ row, isPreview = false, isCompleted = false }: TaskRowProps) => {
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [focusColumn, setFocusColumn] = useState<string | null>(null);
-    const { data: buckets = [] } = useBuckets();
+    const { data: buckets = [] } = useHydratedBuckets();
 
     // Keep all mutations in top level TaskRow rather than individual display/edit variants
     const { mutate: updateTask } = useUpdateTask();
@@ -57,9 +57,6 @@ const TaskRow = memo(
       if (isCompleted) {
         uncompleteTask(row.original, {
           onSuccess: () => {
-            console.log(
-              `Task "${row.original.title}" uncompleted and moved to bucket: ${row.original.bucketId}`
-            );
             // TODO: Add visual highlighting of the task in its new location
           },
           onError: (error) => {
@@ -80,7 +77,6 @@ const TaskRow = memo(
     const handleDuplicate = () => {
       duplicateTask(row.original, {
         onSuccess: () => {
-          console.log(`Task "${row.original.title}" duplicated successfully`);
           // TODO: Add visual highlighting of the new task
         },
         onError: (error) => {
@@ -101,9 +97,24 @@ const TaskRow = memo(
         existingTask={row.original}
         focusColumn={focusColumn}
         onSaveEditTask={(updatedTask) => {
-          updateTask({ taskId: row.original.id, updates: updatedTask });
-          setIsEditing(false);
-          setFocusColumn(null);
+          updateTask(
+            { taskId: row.original.id, updates: updatedTask },
+            {
+              onSuccess: () => {
+                setIsEditing(false);
+                setFocusColumn(null);
+              },
+              onError: (error) => {
+                console.error("Failed to update task:", error);
+                // TODO: Replace with toast notification
+                alert(
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to update task"
+                );
+              },
+            }
+          );
         }}
         onCancel={() => {
           setIsEditing(false);

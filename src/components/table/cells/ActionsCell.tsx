@@ -92,6 +92,7 @@ const ActionsCell = ({
         isOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100",
         "transition-opacity duration-200 flex items-center justify-center gap-1"
       )}
+      style={{ width: "80px", minWidth: "80px" }}
     >
       {/* Quick Complete Button */}
       <button

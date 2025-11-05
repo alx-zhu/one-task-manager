@@ -10,10 +10,12 @@ export function hydrateBucketsWithTasks(
   buckets: Bucket[],
   tasks: Task[]
 ): Bucket[] {
-  return buckets.map((bucket) => ({
-    ...bucket,
-    tasks: tasks
-      .filter((task) => task.bucketId === bucket.id)
-      .sort((a, b) => a.orderInBucket - b.orderInBucket),
-  }));
+  return buckets
+    .map((bucket) => ({
+      ...bucket,
+      tasks: tasks
+        .filter((task) => task.bucketId === bucket.id)
+        .sort((a, b) => a.orderInBucket - b.orderInBucket),
+    }))
+    .sort((a, b) => a.order - b.order);
 }
