@@ -123,13 +123,17 @@ function TimelineGroupSection({ label, tasks }: TimelineGroupSectionProps) {
         </div>
       </div>
 
-      {/* Use TaskTable with custom row renderer */}
-      <TaskTable
-        data={tasks}
-        columns={completedTaskColumns}
-        enableSorting={false}
-        renderRow={(row) => <TaskRow key={row.id} row={row} isCompleted />}
-      />
+      {/* Use TaskTable with custom row renderer - wrapped in scrollable container */}
+      <div className="overflow-x-auto">
+        <div className="min-w-max">
+          <TaskTable
+            data={tasks}
+            columns={completedTaskColumns}
+            enableSorting={false}
+            renderRow={(row) => <TaskRow key={row.id} row={row} isCompleted />}
+          />
+        </div>
+      </div>
     </div>
   );
 }

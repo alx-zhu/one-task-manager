@@ -14,13 +14,6 @@ import TaskEditRow from "../table/row/TaskEditRow";
 import { useCreateTask } from "@/hooks/useTasks";
 import { BucketEditRow } from "./BucketEditRow";
 import { useUpdateBucket } from "@/hooks/useBuckets";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
 import { ChevronUp, ChevronDown, Pencil } from "lucide-react";
 
 interface BucketSectionProps {
@@ -129,10 +122,10 @@ export function BucketSection({
 
   const getMenuClass = () => {
     return cn(
-      "text-xl leading-none cursor-pointer p-1",
+      "h-7 w-7 flex items-center justify-center rounded transition-colors",
       bucket.isOneThing
-        ? "text-white/70 hover:text-white"
-        : "text-gray-400 hover:text-gray-600"
+        ? "text-white/70 hover:text-white hover:bg-white/10"
+        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
     );
   };
 
@@ -186,56 +179,36 @@ export function BucketSection({
               {bucket.limit && `/${bucket.limit}`}
             </span>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className={getMenuClass()}
-                onClick={(e) => e.stopPropagation()}
-              >
-                ⋮
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMoveUp?.(bucket.id);
-                  console.log("move up clicked");
-                }}
-                disabled={isFirst}
-                className="cursor-pointer"
-              >
-                <ChevronUp className="w-4 h-4" />
-                <span>Move Up</span>
-              </DropdownMenuItem>
 
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMoveDown?.(bucket.id);
-                  console.log("move down clicked");
-                }}
-                disabled={isLast}
-                className="cursor-pointer"
-              >
-                <ChevronDown className="w-4 h-4" />
-                <span>Move Down</span>
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditing(true);
-                }}
-                className="cursor-pointer"
-              >
-                <Pencil className="w-4 h-4" />
-                <span>Edit Bucket</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Action Buttons */}
+          <div
+            className="flex items-center gap-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className={getMenuClass()}
+              onClick={() => onMoveUp?.(bucket.id)}
+              disabled={isFirst}
+              title="Move bucket up"
+            >
+              <ChevronUp className="h-4 w-4" />
+            </button>
+            <button
+              className={getMenuClass()}
+              onClick={() => onMoveDown?.(bucket.id)}
+              disabled={isLast}
+              title="Move bucket down"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </button>
+            <button
+              className={getMenuClass()}
+              onClick={() => setIsEditing(true)}
+              title="Edit bucket"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       )}
 
@@ -250,6 +223,7 @@ export function BucketSection({
           >
             <div
               className={cn(
+                "overflow-x-auto",
                 isOver &&
                   overData?.type === "bucket" &&
                   // Don't add border if it is the same bucket as the draggedTask
@@ -257,7 +231,9 @@ export function BucketSection({
                   "border-b-2 border-b-blue-500"
               )}
             >
-              <TaskTable data={bucket.tasks} columns={taskColumns} />
+              <div className="min-w-max">
+                <TaskTable data={bucket.tasks} columns={taskColumns} />
+              </div>
             </div>
 
             {isAddingTask && (

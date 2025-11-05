@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Save, X } from "lucide-react";
+import { Save, X, ChevronUp, ChevronDown } from "lucide-react";
 import type { Bucket } from "@/types/task";
 import { cn } from "@/lib/utils";
 
@@ -9,12 +9,20 @@ interface BucketEditRowProps {
   bucket?: Bucket;
   onSave: (data: { name: string; limit?: number }) => void;
   onCancel: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
+  onMoveUp?: (bucketId: string) => void;
+  onMoveDown?: (bucketId: string) => void;
 }
 
 export function BucketEditRow({
   bucket,
   onSave,
   onCancel,
+  isFirst,
+  isLast,
+  onMoveUp,
+  onMoveDown,
 }: BucketEditRowProps) {
   const [name, setName] = useState(bucket?.name || "");
   const [limit, setLimit] = useState(bucket?.limit?.toString() || "");
@@ -82,7 +90,7 @@ export function BucketEditRow({
       )}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="flex items-center gap-2 flex-1 min-w-0">
+      <div className="flex items-center gap-4 flex-1 min-w-0">
         {/* Chevron placeholder for alignment */}
         <span className="text-base leading-none text-transparent">▼</span>
 
@@ -146,6 +154,40 @@ export function BucketEditRow({
 
       {/* Action Buttons */}
       <div className="flex items-center gap-1 ml-2">
+        {bucket && (
+          <>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              className={cn(
+                "h-7 w-7",
+                bucket?.isOneThing
+                  ? "text-white/70 hover:text-white hover:bg-white/10 disabled:text-white/20 disabled:hover:bg-transparent"
+                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:text-gray-200 disabled:hover:bg-transparent"
+              )}
+              onClick={() => onMoveUp?.(bucket.id)}
+              disabled={isFirst}
+              title="Move bucket up"
+            >
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              className={cn(
+                "h-7 w-7",
+                bucket?.isOneThing
+                  ? "text-white/70 hover:text-white hover:bg-white/10 disabled:text-white/20 disabled:hover:bg-transparent"
+                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:text-gray-200 disabled:hover:bg-transparent"
+              )}
+              onClick={() => onMoveDown?.(bucket.id)}
+              disabled={isLast}
+              title="Move bucket down"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </>
+        )}
         <Button
           size="icon-sm"
           variant="ghost"
