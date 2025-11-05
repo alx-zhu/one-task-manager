@@ -13,8 +13,8 @@ import type {
 import TaskEditRow from "../table/row/TaskEditRow";
 import { useCreateTask } from "@/hooks/useTasks";
 import { BucketEditRow } from "./BucketEditRow";
-import { useUpdateBucket } from "@/hooks/useBuckets";
-import { ChevronUp, ChevronDown, Pencil } from "lucide-react";
+import { useUpdateBucket, useDeleteBucket } from "@/hooks/useBuckets";
+import { BucketActionsCell } from "./BucketActionsCell";
 
 interface BucketSectionProps {
   bucket: Bucket;
@@ -36,6 +36,7 @@ export function BucketSection({
   const [isAddingTask, setIsAddingTask] = useState(false);
   const { mutate: createTask } = useCreateTask();
   const { mutate: updateBucket } = useUpdateBucket();
+  const { mutate: deleteBucket } = useDeleteBucket();
 
   const { active, over } = useDndContext();
 
@@ -98,7 +99,7 @@ export function BucketSection({
 
   const getHeaderClass = () => {
     return cn(
-      "flex items-center justify-between cursor-pointer select-none transition-colors border-b",
+      "flex items-center justify-between cursor-pointer select-none transition-colors border-b group/bucket",
       bucket.isOneThing
         ? "px-5 py-4 bg-gray-900 text-white hover:bg-gray-800 border-gray-700"
         : "px-5 py-3 hover:bg-gray-50 border-gray-200"
@@ -118,19 +119,6 @@ export function BucketSection({
       return `px-2 py-0.5 rounded-xl text-xs font-medium bg-white/20 text-white`;
     }
     return `px-2 py-0.5 rounded-xl text-xs font-medium ${getBucketCountClass()}`;
-  };
-
-  const getMenuClass = (disabled = false) => {
-    return cn(
-      "h-7 w-7 flex items-center justify-center rounded transition-colors",
-      disabled
-        ? bucket.isOneThing
-          ? "text-white/20 cursor-not-allowed"
-          : "text-gray-200 cursor-not-allowed"
-        : bucket.isOneThing
-        ? "text-white/70 hover:text-white hover:bg-white/10"
-        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-    );
   };
 
   const handleAddTaskClick = () => {
@@ -153,6 +141,16 @@ export function BucketSection({
 
   const handleCancelAddTask = () => {
     setIsAddingTask(false);
+  };
+
+  const handleDeleteBucket = () => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${bucket.name}"? This action cannot be undone.`
+      )
+    ) {
+      deleteBucket(bucket.id);
+    }
   };
 
   const canAddTask = !bucket.limit || bucket.tasks.length < bucket.limit;
@@ -189,38 +187,16 @@ export function BucketSection({
           </div>
 
           {/* Action Buttons */}
-          <div
-            className="flex items-center gap-1"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {!bucket.isOneThing && (
-              <>
-                <button
-                  className={getMenuClass(isFirst)}
-                  onClick={() => onMoveUp?.(bucket.id)}
-                  disabled={isFirst}
-                  title="Move bucket up"
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </button>
-                <button
-                  className={getMenuClass(isLast)}
-                  onClick={() => onMoveDown?.(bucket.id)}
-                  disabled={isLast}
-                  title="Move bucket down"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </button>
-              </>
-            )}
-            <button
-              className={getMenuClass()}
-              onClick={() => setIsEditing(true)}
-              title="Edit bucket"
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-          </div>
+          <BucketActionsCell
+            mode="display"
+            bucket={bucket}
+            isFirst={isFirst}
+            isLast={isLast}
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            onEdit={() => setIsEditing(true)}
+            onDelete={handleDeleteBucket}
+          />
         </div>
       )}
 

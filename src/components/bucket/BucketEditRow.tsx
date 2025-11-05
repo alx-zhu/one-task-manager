@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Save, X, ChevronUp, ChevronDown } from "lucide-react";
+import { X } from "lucide-react";
 import type { Bucket } from "@/types/task";
 import { cn } from "@/lib/utils";
+import { useDeleteBucket } from "@/hooks/useBuckets";
+import { BucketActionsCell } from "./BucketActionsCell";
 
 interface BucketEditRowProps {
   bucket?: Bucket;
@@ -30,6 +31,7 @@ export function BucketEditRow({
   const [errorMessage, setErrorMessage] = useState("");
 
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const { mutate: deleteBucket } = useDeleteBucket();
 
   useEffect(() => {
     nameInputRef.current?.focus();
@@ -84,6 +86,18 @@ export function BucketEditRow({
     } else if (e.key === "Escape") {
       e.preventDefault();
       onCancel();
+    }
+  };
+
+  const handleDeleteBucket = () => {
+    if (!bucket) return;
+
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${bucket.name}"? This action cannot be undone.`
+      )
+    ) {
+      deleteBucket(bucket.id);
     }
   };
 
@@ -165,75 +179,25 @@ export function BucketEditRow({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-1 ml-2">
-        {bucket && !bucket.isOneThing && (
-          <>
-            <button
-              className={cn(
-                "h-7 w-7 flex items-center justify-center rounded transition-colors",
-                isFirst
-                  ? "text-gray-200 cursor-not-allowed"
-                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-              )}
-              onClick={() => onMoveUp?.(bucket.id)}
-              disabled={isFirst}
-              title="Move bucket up"
-            >
-              <ChevronUp className="h-4 w-4" />
-            </button>
-            <button
-              className={cn(
-                "h-7 w-7 flex items-center justify-center rounded transition-colors",
-                isLast
-                  ? "text-gray-200 cursor-not-allowed"
-                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-              )}
-              onClick={() => onMoveDown?.(bucket.id)}
-              disabled={isLast}
-              title="Move bucket down"
-            >
-              <ChevronDown className="h-4 w-4" />
-            </button>
-          </>
-        )}
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          className={cn(
-            "h-7 w-7",
-            bucket?.isOneThing
-              ? "text-green-400 hover:text-green-300 hover:bg-white/10"
-              : "text-green-600 hover:text-green-700 hover:bg-green-100"
-          )}
-          onClick={handleSave}
-          title="Save (Enter)"
-        >
-          <Save className="h-4 w-4" />
-        </Button>
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          className={cn(
-            "h-7 w-7",
-            bucket?.isOneThing
-              ? "text-red-400 hover:text-red-300 hover:bg-white/10"
-              : "text-red-600 hover:text-red-700 hover:bg-red-100"
-          )}
-          onClick={onCancel}
-          title="Cancel (Esc)"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+      {bucket && (
+        <BucketActionsCell
+          mode="edit"
+          bucket={bucket}
+          isFirst={isFirst}
+          isLast={isLast}
+          onMoveUp={onMoveUp}
+          onMoveDown={onMoveDown}
+          onSave={handleSave}
+          onCancel={onCancel}
+          onDelete={handleDeleteBucket}
+        />
+      )}
 
       {/* Error Message Tooltip */}
       {showError && errorMessage && (
         <div
           className={cn(
-            "absolute left-5 right-5 top-[90%] mt-1 px-3 py-2 rounded shadow-lg text-sm z-10 flex items-center justify-between",
-            bucket?.isOneThing
-              ? "bg-red-900 text-red-100"
-              : "bg-red-50 text-red-600 border border-red-200"
+            "absolute left-5 right-5 top-[90%] mt-1 px-3 py-2 rounded shadow-lg text-sm z-10 flex items-center justify-between bg-red-50 text-red-600 border border-red-200"
           )}
         >
           {errorMessage}

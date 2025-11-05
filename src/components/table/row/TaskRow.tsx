@@ -57,9 +57,6 @@ const TaskRow = memo(
       if (isCompleted) {
         uncompleteTask(row.original, {
           onSuccess: () => {
-            console.log(
-              `Task "${row.original.title}" uncompleted and moved to bucket: ${row.original.bucketId}`
-            );
             // TODO: Add visual highlighting of the task in its new location
           },
           onError: (error) => {
@@ -80,7 +77,6 @@ const TaskRow = memo(
     const handleDuplicate = () => {
       duplicateTask(row.original, {
         onSuccess: () => {
-          console.log(`Task "${row.original.title}" duplicated successfully`);
           // TODO: Add visual highlighting of the new task
         },
         onError: (error) => {

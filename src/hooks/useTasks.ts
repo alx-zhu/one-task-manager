@@ -9,9 +9,11 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Task, NewTask, EditedTask } from "@/types/task";
+import type { Task, NewTask, EditedTask, Bucket } from "@/types/task";
 import * as tasksApi from "@/api/tasks.api";
-import { useBuckets } from "./useBuckets";
+import { bucketKeys } from "./useBuckets";
+import { hydrateBucketsWithTasks } from "@/lib/utils";
+import { findFirstBucketWithSpace } from "@/lib/bucketValidations";
 
 // Query keys for cache management
 export const taskKeys = {
@@ -204,31 +206,35 @@ export const useBulkUpdateTasks = () => {
 export function useDuplicateTask() {
   const queryClient = useQueryClient();
   const createTask = useCreateTask();
-  const { data: buckets = [] } = useBuckets();
 
   return useMutation({
     mutationFn: async (task: Task) => {
-      const tasks = queryClient.getQueryData<Task[]>(taskKeys.lists()) || [];
+      // Get fresh data from cache
+      const buckets =
+        queryClient.getQueryData<Bucket[]>(bucketKeys.lists()) || [];
+      const tasks =
+        queryClient.getQueryData<Task[]>(
+          taskKeys.list({ isComplete: false })
+        ) || [];
+
+      // Hydrate buckets with tasks for accurate validation
+      const hydratedBuckets = hydrateBucketsWithTasks(buckets, tasks);
 
       // Check if current bucket has capacity
-      const currentBucket = buckets.find((b) => b.id === task.bucketId);
-      const currentBucketTasks = tasks.filter(
-        (t) => t.bucketId === task.bucketId
-      );
+      const currentBucket = hydratedBuckets.find((b) => b.id === task.bucketId);
+      const currentBucketTaskCount = currentBucket?.tasks?.length || 0;
       const hasCapacity =
-        !currentBucket?.limit ||
-        currentBucketTasks.length < currentBucket.limit;
+        !currentBucket?.limit || currentBucketTaskCount < currentBucket.limit;
 
       let targetBucketId = task.bucketId;
 
-      // If current bucket is full, find first available bucket
+      // If current bucket is full, find first available bucket using validator
       if (!hasCapacity) {
-        const availableBucket = buckets.find((bucket) => {
-          const bucketTaskCount = tasks.filter(
-            (t) => t.bucketId === bucket.id
-          ).length;
-          return !bucket.limit || bucketTaskCount < bucket.limit;
-        });
+        const availableBucket = findFirstBucketWithSpace(
+          task.bucketId,
+          1, // Need space for 1 task
+          hydratedBuckets
+        );
 
         if (availableBucket) {
           targetBucketId = availableBucket.id;
@@ -236,6 +242,10 @@ export function useDuplicateTask() {
           throw new Error("No available buckets with capacity for duplicate");
         }
       }
+
+      // Calculate order in target bucket
+      const targetBucket = hydratedBuckets.find((b) => b.id === targetBucketId);
+      const targetOrderInBucket = targetBucket?.tasks?.length || 0;
 
       const newTask: NewTask = {
         title: `${task.title} (copy)`,
@@ -245,8 +255,7 @@ export function useDuplicateTask() {
         tags: task.tags,
         dueDate: task.dueDate,
         bucketId: targetBucketId,
-        orderInBucket: tasks.filter((t) => t.bucketId === targetBucketId)
-          .length,
+        orderInBucket: targetOrderInBucket,
         userId: task.userId,
       };
 
@@ -265,45 +274,47 @@ export function useDuplicateTask() {
 export function useUncompleteTask() {
   const queryClient = useQueryClient();
   const updateTask = useUpdateTask();
-  const { data: buckets = [] } = useBuckets();
 
   return useMutation({
     mutationFn: async (task: Task) => {
-      const tasks = queryClient.getQueryData<Task[]>(taskKeys.lists()) || [];
+      // Get fresh data from cache
+      const buckets =
+        queryClient.getQueryData<Bucket[]>(bucketKeys.lists()) || [];
+      const tasks =
+        queryClient.getQueryData<Task[]>(
+          taskKeys.list({ isComplete: false })
+        ) || [];
 
-      // Filter to only count incomplete tasks in buckets
-      const incompleteTasks = tasks.filter((t) => t.status !== "completed");
+      // Hydrate buckets with tasks for accurate validation
+      const hydratedBuckets = hydrateBucketsWithTasks(buckets, tasks);
 
       // Try to return task to its original bucket
-      const originalBucket = buckets.find((b) => b.id === task.bucketId);
-      const originalBucketTasks = incompleteTasks.filter(
-        (t) => t.bucketId === task.bucketId
+      const originalBucket = hydratedBuckets.find(
+        (b) => b.id === task.bucketId
       );
+      const originalBucketTaskCount = originalBucket?.tasks?.length || 0;
       const hasCapacity =
         !originalBucket?.limit ||
-        originalBucketTasks.length < originalBucket.limit;
+        originalBucketTaskCount < originalBucket.limit;
 
       let targetBucketId = task.bucketId;
-      let targetOrderInBucket = originalBucketTasks.length;
+      let targetOrderInBucket = originalBucketTaskCount;
 
-      // If original bucket is full, find first available bucket
+      // If original bucket is full, find first available bucket using validator
       if (!hasCapacity) {
         console.warn(
           `Original bucket "${originalBucket?.name}" is at capacity. Finding alternative bucket...`
         );
 
-        const availableBucket = buckets.find((bucket) => {
-          const bucketTaskCount = incompleteTasks.filter(
-            (t) => t.bucketId === bucket.id
-          ).length;
-          return !bucket.limit || bucketTaskCount < bucket.limit;
-        });
+        const availableBucket = findFirstBucketWithSpace(
+          task.bucketId,
+          1, // Need space for 1 task
+          hydratedBuckets
+        );
 
         if (availableBucket) {
           targetBucketId = availableBucket.id;
-          targetOrderInBucket = incompleteTasks.filter(
-            (t) => t.bucketId === availableBucket.id
-          ).length;
+          targetOrderInBucket = availableBucket.tasks?.length || 0;
           console.warn(
             `Task will be moved to "${availableBucket.name}" bucket instead.`
           );

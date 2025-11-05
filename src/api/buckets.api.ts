@@ -137,8 +137,6 @@ export const bulkUpdateBuckets = async (
     return update ? { ...bucket, ...update, updatedAt: new Date() } : bucket;
   });
 
-  console.log("bulkUpdateBuckets - updatedBuckets:", updatedBuckets);
-
   saveBucketsToStorage(updatedBuckets);
 
   return simulateApiCall(updatedBuckets.filter((b) => updateMap.has(b.id!)));
