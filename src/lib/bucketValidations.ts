@@ -110,103 +110,78 @@ export const canUpdateBucketLimit = (
 };
 
 /**
- * Find the first bucket with available space for task relocation
+ * Find a bucket with available capacity for tasks, with optional preferred target
  *
- * Algorithm:
- * 1. Get all buckets except the source bucket
- * 2. Calculate available space for each bucket (limit - current task count)
- * 3. Return the first bucket with enough space for the specified number of tasks
+ * Simple algorithm:
+ * 1. If targetBucketId is provided and has capacity, use it
+ * 2. Otherwise, find the first bucket (by order) with capacity
+ * 3. Optionally exclude buckets from consideration
  *
- * @param sourceBucketId - The ID of the bucket to exclude from search
  * @param taskCount - Number of tasks that need space
  * @param allBuckets - All buckets in the system (should include hydrated tasks)
- * @returns The first bucket with enough space, or null if none available
+ * @param targetBucketId - Optional preferred bucket to try first
+ * @param excludeBucketIds - Optional bucket IDs to exclude from search (e.g., buckets being deleted)
+ * @param errorMessage - Custom error message if no bucket has capacity
+ * @returns Object containing the bucket ID, order, and whether it was relocated
+ * @throws Error if no bucket has capacity for the tasks
  */
-export const findFirstBucketWithSpace = (
-  sourceBucketId: string,
+export const findTargetBucketWithCapacity = (
   taskCount: number,
-  allBuckets: Bucket[]
-): Bucket | null => {
-  if (taskCount === 0) {
-    return null;
-  }
+  allBuckets: Bucket[],
+  targetBucketId?: string,
+  excludeBucketIds?: string[],
+  errorMessage?: string
+): {
+  bucketId: string;
+  orderInBucket: number;
+  relocated: boolean;
+  targetBucket: Bucket;
+} => {
+  const excludeSet = new Set(excludeBucketIds || []);
 
-  // Get all other buckets (sorted by order to maintain consistent behavior)
-  const otherBuckets = allBuckets
-    .filter((b) => b.id !== sourceBucketId)
-    .sort((a, b) => a.order - b.order);
-
-  // Find first bucket with enough space
-  for (const bucket of otherBuckets) {
+  // Helper to check if a bucket has capacity
+  const hasCapacity = (bucket: Bucket) => {
     const currentTaskCount = bucket.tasks?.length || 0;
-    const availableSpace = bucket.limit
-      ? bucket.limit - currentTaskCount
-      : Infinity;
+    return !bucket.limit || currentTaskCount + taskCount <= bucket.limit;
+  };
 
-    if (availableSpace >= taskCount) {
-      return bucket;
+  // Try the target bucket first if specified and not excluded
+  if (targetBucketId && !excludeSet.has(targetBucketId)) {
+    const targetBucket = allBuckets.find((b) => b.id === targetBucketId);
+
+    if (targetBucket && hasCapacity(targetBucket)) {
+      return {
+        bucketId: targetBucketId,
+        orderInBucket: targetBucket.tasks?.length || 0,
+        relocated: false,
+        targetBucket,
+      };
     }
   }
 
-  return null;
-};
+  // Find first available bucket (excluding specified buckets)
+  const availableBucket = allBuckets
+    .filter((b) => !excludeSet.has(b.id))
+    .sort((a, b) => a.order - b.order)
+    .find(hasCapacity);
 
-/**
- * Validates if a bucket can be deleted with task relocation
- *
- * Rules:
- * - Cannot delete "The ONE Thing" bucket (isOneThing: true)
- * - Cannot delete the last bucket with no limit
- * - If bucket has tasks, there must be another bucket with enough space
- *
- * @param bucketId - The ID of the bucket to delete
- * @param allBuckets - All buckets in the system (should include hydrated tasks)
- * @returns Validation result with optional target bucket for relocation
- */
-export const canDeleteBucketWithRelocation = (
-  bucketId: string,
-  allBuckets: Bucket[]
-): BucketValidationResult & { targetBucketId?: string } => {
-  // First run standard deletion checks
-  const basicValidation = canDeleteBucket(bucketId, allBuckets);
-  if (!basicValidation.isValid) {
-    return basicValidation;
-  }
-
-  // Check if bucket has tasks that need relocation
-  const bucketToDelete = allBuckets.find((b) => b.id === bucketId);
-  if (!bucketToDelete) {
+  if (availableBucket) {
     return {
-      isValid: false,
-      message: "Bucket not found",
+      bucketId: availableBucket.id,
+      orderInBucket: availableBucket.tasks?.length || 0,
+      relocated:
+        targetBucketId !== undefined && targetBucketId !== availableBucket.id,
+      targetBucket: availableBucket,
     };
   }
 
-  const taskCount = bucketToDelete.tasks?.length || 0;
-
-  // If no tasks, deletion is straightforward
-  if (taskCount === 0) {
-    return { isValid: true };
-  }
-
-  // Find a bucket to relocate tasks to
-  const targetBucket = findFirstBucketWithSpace(
-    bucketId,
-    taskCount,
-    allBuckets
-  );
-
-  if (!targetBucket) {
-    return {
-      isValid: false,
-      message: `Cannot delete bucket. No other bucket has space for ${taskCount} task${
+  // No bucket has capacity
+  const error = new Error(
+    errorMessage ||
+      `Cannot place ${taskCount} task${
         taskCount > 1 ? "s" : ""
-      }.`,
-    };
-  }
-
-  return {
-    isValid: true,
-    targetBucketId: targetBucket.id,
-  };
+      } - all buckets are at capacity. Please free up space first.`
+  );
+  console.error(error.message);
+  throw error;
 };

@@ -8,11 +8,12 @@ import * as tasksApi from "@/api/tasks.api";
 import { hydrateBucketsWithTasks } from "@/lib/utils";
 import {
   canUpdateBucketLimit,
-  canDeleteBucketWithRelocation,
+  canDeleteBucket,
+  findTargetBucketWithCapacity,
 } from "@/lib/bucketValidations";
 import { useMemo } from "react";
-import { useTasks, taskKeys } from "./useTasks";
-import type { Bucket, Task } from "@/types/task";
+import { useTasks, getTasksFromCache, taskKeys } from "./useTasks";
+import type { Bucket } from "@/types/task";
 
 // Query keys for cache management
 export const bucketKeys = {
@@ -122,19 +123,13 @@ export const useDeleteBucket = () => {
       // Get fresh data from cache at mutation time (not hook creation time)
       const buckets =
         queryClient.getQueryData<Bucket[]>(bucketKeys.lists()) || [];
-      const tasks =
-        queryClient.getQueryData<Task[]>(
-          taskKeys.list({ isComplete: false })
-        ) || [];
+      const tasks = getTasksFromCache(queryClient, false);
 
       // Hydrate buckets with tasks for accurate validation
       const hydratedBuckets = hydrateBucketsWithTasks(buckets, tasks);
 
-      // Validation: Check if bucket can be deleted with task relocation
-      const validation = canDeleteBucketWithRelocation(
-        bucketId,
-        hydratedBuckets
-      );
+      // Validate if bucket can be deleted (basic checks)
+      const validation = canDeleteBucket(bucketId, hydratedBuckets);
       if (!validation.isValid) {
         throw new Error(validation.message);
       }
@@ -143,24 +138,27 @@ export const useDeleteBucket = () => {
       const bucketToDelete = hydratedBuckets.find((b) => b.id === bucketId);
       const tasksToRelocate = bucketToDelete?.tasks || [];
 
-      // If there are tasks to relocate and we have a target bucket
-      if (tasksToRelocate.length > 0 && validation.targetBucketId) {
-        const targetBucket = hydratedBuckets.find(
-          (b) => b.id === validation.targetBucketId
-        );
-
-        if (!targetBucket) {
-          throw new Error("Target bucket not found");
-        }
-
-        // Calculate new order for relocated tasks
-        const targetBucketTaskCount = targetBucket.tasks?.length || 0;
+      // If there are tasks to relocate, find a bucket with capacity
+      if (tasksToRelocate.length > 0) {
+        // Use the helper to find a bucket that can accommodate all tasks
+        const { bucketId: targetBucketId, orderInBucket: startOrder } =
+          findTargetBucketWithCapacity(
+            tasksToRelocate.length,
+            hydratedBuckets,
+            undefined, // No preferred target
+            [bucketId], // Exclude the bucket being deleted
+            `Cannot delete bucket "${
+              bucketToDelete?.name
+            }". No other bucket has space for ${tasksToRelocate.length} task${
+              tasksToRelocate.length > 1 ? "s" : ""
+            }.`
+          );
 
         // Move all tasks to the target bucket
         const taskUpdates = tasksToRelocate.map((task, index) => ({
           id: task.id,
-          bucketId: validation.targetBucketId!,
-          orderInBucket: targetBucketTaskCount + index,
+          bucketId: targetBucketId,
+          orderInBucket: startOrder + index,
         }));
 
         // Update all tasks first

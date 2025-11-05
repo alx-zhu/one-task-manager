@@ -97,9 +97,24 @@ const TaskRow = memo(
         existingTask={row.original}
         focusColumn={focusColumn}
         onSaveEditTask={(updatedTask) => {
-          updateTask({ taskId: row.original.id, updates: updatedTask });
-          setIsEditing(false);
-          setFocusColumn(null);
+          updateTask(
+            { taskId: row.original.id, updates: updatedTask },
+            {
+              onSuccess: () => {
+                setIsEditing(false);
+                setFocusColumn(null);
+              },
+              onError: (error) => {
+                console.error("Failed to update task:", error);
+                // TODO: Replace with toast notification
+                alert(
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to update task"
+                );
+              },
+            }
+          );
         }}
         onCancel={() => {
           setIsEditing(false);
