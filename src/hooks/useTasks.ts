@@ -85,9 +85,9 @@ export const useUpdateTask = () => {
       // Check if uncompleting a task via status update
       if (updates.status && updates.status !== "completed") {
         const completedTasks = getTasksFromCache(queryClient, true);
-        const task = completedTasks.find((t) => t.id === taskId);
+        const completedTask = completedTasks.find((t) => t.id === taskId);
 
-        if (task) {
+        if (completedTask) {
           // Task is being uncompleted - find bucket with capacity
           const buckets =
             queryClient.getQueryData<Bucket[]>(bucketKeys.lists()) || [];
@@ -100,7 +100,7 @@ export const useUpdateTask = () => {
           } = findTargetBucketWithCapacity(
             1,
             hydratedBuckets,
-            task.bucketId,
+            completedTask.bucketId,
             [],
             "Cannot uncomplete task - all buckets are at capacity. Please free up space first."
           );
@@ -113,6 +113,7 @@ export const useUpdateTask = () => {
         }
       }
 
+      // If a task is not being uncompleted, just update normally
       return tasksApi.updateTask(taskId, updates);
     },
     onSuccess: () => {
