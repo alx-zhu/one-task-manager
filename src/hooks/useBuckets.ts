@@ -65,9 +65,40 @@ export const useUpdateBucket = () => {
     }: {
       bucketId: string;
       updates: Partial<Bucket>;
-    }) => bucketsApi.updateBucket(bucketId, updates),
+    }) => {
+      // Validation: Ensure at least one bucket has no limit
+      if (updates.limit !== undefined) {
+        const buckets =
+          queryClient.getQueryData<Bucket[]>(bucketKeys.lists()) || [];
+        const currentBucket = buckets.find((b) => b.id === bucketId);
+
+        // If this bucket currently has no limit and we're adding one
+        if (currentBucket && currentBucket.limit === undefined) {
+          // Check if there's at least one other bucket with no limit
+          const otherUnlimitedBuckets = buckets.filter(
+            (b) => b.id !== bucketId && b.limit === undefined
+          );
+
+          if (
+            otherUnlimitedBuckets.length === 0 &&
+            updates.limit !== undefined
+          ) {
+            throw new Error(
+              "Cannot set a limit on this bucket. At least one bucket must have no limit."
+            );
+          }
+        }
+      }
+
+      return bucketsApi.updateBucket(bucketId, updates);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bucketKeys.lists() });
+    },
+    onError: (error) => {
+      // Display error to user (you can use a toast notification here)
+      console.error("Failed to update bucket:", error);
+      alert(error instanceof Error ? error.message : "Failed to update bucket");
     },
   });
 };
@@ -106,9 +137,21 @@ export const useMoveBucket = () => {
     const currentIndex = sorted.findIndex((b) => b.id === bucketId);
     if (currentIndex === -1) return;
 
+    // Validation: Cannot move the first bucket (The ONE Thing)
+    if (currentIndex === 0 || sorted[currentIndex].isOneThing) {
+      console.warn("Cannot move The ONE Thing bucket");
+      return;
+    }
+
     const targetIndex =
       direction === "up" ? currentIndex - 1 : currentIndex + 1;
     if (targetIndex < 0 || targetIndex >= sorted.length) return;
+
+    // Additional check: Cannot swap with the first bucket
+    if (targetIndex === 0 || sorted[targetIndex].isOneThing) {
+      console.warn("Cannot move buckets past The ONE Thing bucket");
+      return;
+    }
 
     // Swap order values
     const updates = [

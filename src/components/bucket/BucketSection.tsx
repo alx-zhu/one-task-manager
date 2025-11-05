@@ -120,10 +120,14 @@ export function BucketSection({
     return `px-2 py-0.5 rounded-xl text-xs font-medium ${getBucketCountClass()}`;
   };
 
-  const getMenuClass = () => {
+  const getMenuClass = (disabled = false) => {
     return cn(
       "h-7 w-7 flex items-center justify-center rounded transition-colors",
-      bucket.isOneThing
+      disabled
+        ? bucket.isOneThing
+          ? "text-white/20 cursor-not-allowed"
+          : "text-gray-200 cursor-not-allowed"
+        : bucket.isOneThing
         ? "text-white/70 hover:text-white hover:bg-white/10"
         : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
     );
@@ -165,6 +169,10 @@ export function BucketSection({
             setIsEditing(false);
           }}
           onCancel={() => setIsEditing(false)}
+          isFirst={isFirst}
+          isLast={isLast}
+          onMoveUp={onMoveUp}
+          onMoveDown={onMoveDown}
         />
       ) : (
         <div
@@ -185,22 +193,26 @@ export function BucketSection({
             className="flex items-center gap-1"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              className={getMenuClass()}
-              onClick={() => onMoveUp?.(bucket.id)}
-              disabled={isFirst}
-              title="Move bucket up"
-            >
-              <ChevronUp className="h-4 w-4" />
-            </button>
-            <button
-              className={getMenuClass()}
-              onClick={() => onMoveDown?.(bucket.id)}
-              disabled={isLast}
-              title="Move bucket down"
-            >
-              <ChevronDown className="h-4 w-4" />
-            </button>
+            {!bucket.isOneThing && (
+              <>
+                <button
+                  className={getMenuClass(isFirst)}
+                  onClick={() => onMoveUp?.(bucket.id)}
+                  disabled={isFirst}
+                  title="Move bucket up"
+                >
+                  <ChevronUp className="h-4 w-4" />
+                </button>
+                <button
+                  className={getMenuClass(isLast)}
+                  onClick={() => onMoveDown?.(bucket.id)}
+                  disabled={isLast}
+                  title="Move bucket down"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </>
+            )}
             <button
               className={getMenuClass()}
               onClick={() => setIsEditing(true)}

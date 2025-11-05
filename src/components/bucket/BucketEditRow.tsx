@@ -49,6 +49,13 @@ export function BucketEditRow({
     const newLimit =
       limitValue && parseInt(limitValue) > 0 ? parseInt(limitValue) : undefined;
 
+    // Validation: First bucket (isOneThing) must always have limit of 1
+    if (bucket?.isOneThing && newLimit !== 1) {
+      setShowError(true);
+      setErrorMessage("The ONE Thing bucket must have a limit of 1");
+      return;
+    }
+
     // Validate limit against current task count
     if (bucket && newLimit !== undefined) {
       const currentTaskCount = bucket.tasks.length;
@@ -140,12 +147,17 @@ export function BucketEditRow({
             }}
             onKeyDown={handleKeyDown}
             placeholder="∞"
-            title="Leave empty or set to 0 for no limit"
+            title={
+              bucket?.isOneThing
+                ? "The ONE Thing bucket must have a limit of 1"
+                : "Leave empty or set to 0 for no limit"
+            }
+            disabled={bucket?.isOneThing}
             className={cn(
               "h-7 w-16 text-sm px-2 text-center",
               showError && "border-red-500 focus-visible:ring-red-500",
               bucket?.isOneThing
-                ? "bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                ? "bg-white/10 border-white/20 text-white placeholder:text-white/50 cursor-not-allowed opacity-60"
                 : "bg-white"
             )}
           />
@@ -154,38 +166,34 @@ export function BucketEditRow({
 
       {/* Action Buttons */}
       <div className="flex items-center gap-1 ml-2">
-        {bucket && (
+        {bucket && !bucket.isOneThing && (
           <>
-            <Button
-              size="icon-sm"
-              variant="ghost"
+            <button
               className={cn(
-                "h-7 w-7",
-                bucket?.isOneThing
-                  ? "text-white/70 hover:text-white hover:bg-white/10 disabled:text-white/20 disabled:hover:bg-transparent"
-                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:text-gray-200 disabled:hover:bg-transparent"
+                "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                isFirst
+                  ? "text-gray-200 cursor-not-allowed"
+                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
               )}
               onClick={() => onMoveUp?.(bucket.id)}
               disabled={isFirst}
               title="Move bucket up"
             >
               <ChevronUp className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon-sm"
-              variant="ghost"
+            </button>
+            <button
               className={cn(
-                "h-7 w-7",
-                bucket?.isOneThing
-                  ? "text-white/70 hover:text-white hover:bg-white/10 disabled:text-white/20 disabled:hover:bg-transparent"
-                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:text-gray-200 disabled:hover:bg-transparent"
+                "h-7 w-7 flex items-center justify-center rounded transition-colors",
+                isLast
+                  ? "text-gray-200 cursor-not-allowed"
+                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
               )}
               onClick={() => onMoveDown?.(bucket.id)}
               disabled={isLast}
               title="Move bucket down"
             >
               <ChevronDown className="h-4 w-4" />
-            </Button>
+            </button>
           </>
         )}
         <Button

@@ -178,7 +178,7 @@ function App() {
               <BucketSection
                 key={bucket.id}
                 bucket={bucket}
-                isFirst={index === 0}
+                isFirst={index === 1}
                 isLast={index === hydratedBuckets.length - 1}
                 onMoveUp={() => moveBucket(bucket.id, "up")}
                 onMoveDown={() => moveBucket(bucket.id, "down")}

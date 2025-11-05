@@ -10,7 +10,7 @@ import {
   useUncompleteTask,
 } from "@/hooks/useTasks";
 import { useMoveTaskToBucket } from "@/hooks/useTaskDragOperations";
-import { useBuckets } from "@/hooks/useBuckets";
+import { useHydratedBuckets } from "@/hooks/useBuckets";
 
 interface TaskRowProps {
   row: Row<Task>;
@@ -23,7 +23,7 @@ const TaskRow = memo(
   ({ row, isPreview = false, isCompleted = false }: TaskRowProps) => {
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [focusColumn, setFocusColumn] = useState<string | null>(null);
-    const { data: buckets = [] } = useBuckets();
+    const { data: buckets = [] } = useHydratedBuckets();
 
     // Keep all mutations in top level TaskRow rather than individual display/edit variants
     const { mutate: updateTask } = useUpdateTask();
