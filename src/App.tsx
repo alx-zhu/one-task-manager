@@ -184,7 +184,7 @@ function App() {
         {/* Header */}
         <header className="mb-10">
           <h1 className="text-3xl font-semibold text-gray-900 mb-2">
-            Task Pipeline
+            Just ONE Thing
           </h1>
           <p className="text-gray-500 text-[0.95rem]">
             Focus on your ONE thing by prioritizing what matters most
