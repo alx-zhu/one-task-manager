@@ -236,14 +236,14 @@ export function BucketSection({
 
             {/* Add Task Row */}
             {!isAddingTask && (
-              <div className="flex p-2 border-t border-gray-100">
+              <div className="border-t border-gray-100">
                 <button
                   onClick={handleAddTaskClick}
                   disabled={!canAddTask}
                   className={cn(
-                    "flex items-center gap-2 text-sm px-2 py-1.5 rounded transition-colors",
+                    "w-full flex items-center gap-2 text-sm px-4 py-3 transition-colors text-left",
                     canAddTask
-                      ? "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                      ? "text-gray-500 hover:bg-gray-50 cursor-pointer"
                       : "text-gray-300 cursor-not-allowed"
                   )}
                 >
