@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
 import type { Bucket } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { useDeleteBucket } from "@/hooks/useBuckets";
 import { BucketActionsCell } from "./BucketActionsCell";
+import { toast } from "sonner";
 
 interface BucketEditRowProps {
   bucket?: Bucket;
@@ -27,9 +27,7 @@ export function BucketEditRow({
 }: BucketEditRowProps) {
   const [name, setName] = useState(bucket?.name || "");
   const [limit, setLimit] = useState(bucket?.limit?.toString() || "");
-  const [showError, setShowError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
+  const [hasError, setHasError] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const { mutate: deleteBucket } = useDeleteBucket();
 
@@ -38,10 +36,14 @@ export function BucketEditRow({
     nameInputRef.current?.select();
   }, []);
 
+  const showError = (message: string) => {
+    setHasError(true);
+    toast.error(message);
+  };
+
   const handleSave = () => {
     if (!name.trim()) {
-      setShowError(true);
-      setErrorMessage("Bucket name is required");
+      showError("Bucket name is required");
       nameInputRef.current?.focus();
       return;
     }
@@ -53,8 +55,7 @@ export function BucketEditRow({
 
     // Validation: First bucket (isOneThing) must always have limit of 1
     if (bucket?.isOneThing && newLimit !== 1) {
-      setShowError(true);
-      setErrorMessage("The ONE Thing bucket must have a limit of 1");
+      showError("The ONE Thing bucket must have a limit of 1");
       return;
     }
 
@@ -62,8 +63,7 @@ export function BucketEditRow({
     if (bucket && newLimit !== undefined) {
       const currentTaskCount = bucket.tasks.length;
       if (newLimit < currentTaskCount) {
-        setShowError(true);
-        setErrorMessage(
+        showError(
           `Cannot set limit to ${newLimit}. This bucket has ${currentTaskCount} tasks. ` +
             `Please move ${currentTaskCount - newLimit} task${
               currentTaskCount - newLimit > 1 ? "s" : ""
@@ -102,16 +102,8 @@ export function BucketEditRow({
   };
 
   return (
-    <div
-      className={cn(
-        "flex items-center justify-between px-5 py-3 border-b border-gray-200 relative",
-        bucket?.isOneThing
-          ? "bg-gray-900 text-white"
-          : "bg-blue-50 border-b-blue-400"
-      )}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="flex items-center gap-4 flex-1 min-w-0">
+    <>
+      <div className="flex items-center gap-3 flex-1 min-w-0">
         {/* Chevron placeholder for alignment */}
         <span className="text-base leading-none text-transparent">▼</span>
 
@@ -122,24 +114,25 @@ export function BucketEditRow({
           value={name}
           onChange={(e) => {
             setName(e.target.value);
-            if (showError && e.target.value.trim()) {
-              setShowError(false);
-              setErrorMessage("");
-            }
+            if (hasError) setHasError(false);
           }}
           onKeyDown={handleKeyDown}
           placeholder="Bucket name"
           className={cn(
             "h-7 text-sm font-medium px-2 flex-1 min-w-[150px]",
-            showError && "border-red-500 focus-visible:ring-red-500",
+            hasError && "border-red-500 focus-visible:ring-red-500",
             bucket?.isOneThing
               ? "bg-white/10 border-white/20 text-white placeholder:text-white/50"
               : "bg-white"
           )}
+          onClick={(e) => e.stopPropagation()}
         />
 
         {/* Limit Input */}
-        <div className="flex items-center gap-1">
+        <div
+          className="flex items-center gap-1"
+          onClick={(e) => e.stopPropagation()}
+        >
           <span
             className={cn(
               "text-xs",
@@ -154,10 +147,7 @@ export function BucketEditRow({
             value={limit}
             onChange={(e) => {
               setLimit(e.target.value);
-              if (showError) {
-                setShowError(false);
-                setErrorMessage("");
-              }
+              if (hasError) setHasError(false);
             }}
             onKeyDown={handleKeyDown}
             placeholder="∞"
@@ -169,7 +159,7 @@ export function BucketEditRow({
             disabled={bucket?.isOneThing}
             className={cn(
               "h-7 w-16 text-sm px-2 text-center",
-              showError && "border-red-500 focus-visible:ring-red-500",
+              hasError && "border-red-500 focus-visible:ring-red-500",
               bucket?.isOneThing
                 ? "bg-white/10 border-white/20 text-white placeholder:text-white/50 cursor-not-allowed opacity-60"
                 : "bg-white"
@@ -190,23 +180,6 @@ export function BucketEditRow({
         onCancel={onCancel}
         onDelete={bucket ? handleDeleteBucket : undefined}
       />
-
-      {/* Error Message Tooltip */}
-      {showError && errorMessage && (
-        <div
-          className={cn(
-            "absolute left-5 right-5 top-[90%] mt-1 px-3 py-2 rounded shadow-lg text-sm z-10 flex items-center justify-between bg-red-50 text-red-600 border border-red-200"
-          )}
-        >
-          {errorMessage}
-          <button
-            className="text-gray-400 hover:text-red-600 cursor-pointer"
-            onClick={() => setShowError(false)}
-          >
-            <X className="h-4 w-4 text-gray-400 hover:text-red-600 cursor-pointer" />
-          </button>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

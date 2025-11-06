@@ -17,7 +17,10 @@ export function BucketCreateSection({
 }: BucketCreateSectionProps) {
   return (
     <div className="rounded-lg overflow-hidden mb-4 bg-white border-2 border-blue-400">
-      <BucketEditRow onSave={onSave} onCancel={onCancel} />
+      {/* Header with edit inputs */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-blue-50">
+        <BucketEditRow onSave={onSave} onCancel={onCancel} />
+      </div>
 
       {/* Empty task table preview */}
       <div className="border-t border-gray-200">

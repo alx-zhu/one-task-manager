@@ -158,47 +158,49 @@ export function BucketSection({
   return (
     <div ref={setNodeRef} className={getContainerClass()}>
       {/* Bucket Header */}
-      {isEditing ? (
-        <BucketEditRow
-          bucket={bucket}
-          onSave={(data) => {
-            // Call update bucket mutation
-            updateBucket({ bucketId: bucket.id, updates: data });
-            setIsEditing(false);
-          }}
-          onCancel={() => setIsEditing(false)}
-          isFirst={isFirst}
-          isLast={isLast}
-          onMoveUp={onMoveUp}
-          onMoveDown={onMoveDown}
-        />
-      ) : (
-        <div
-          className={getHeaderClass()}
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
-          <div className="flex items-center gap-3 flex-1">
-            <span className={getChevronClass()}>▼</span>
-            <span className="font-medium text-sm">{bucket.name}</span>
-            <span className={getCountClass()}>
-              {bucket.tasks.length}
-              {bucket.limit && `/${bucket.limit}`}
-            </span>
-          </div>
-
-          {/* Action Buttons */}
-          <BucketActionsCell
-            mode="display"
+      <div
+        className={getHeaderClass()}
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
+        {isEditing ? (
+          <BucketEditRow
             bucket={bucket}
+            onSave={(data) => {
+              // Call update bucket mutation
+              updateBucket({ bucketId: bucket.id, updates: data });
+              setIsEditing(false);
+            }}
+            onCancel={() => setIsEditing(false)}
             isFirst={isFirst}
             isLast={isLast}
             onMoveUp={onMoveUp}
             onMoveDown={onMoveDown}
-            onEdit={() => setIsEditing(true)}
-            onDelete={handleDeleteBucket}
           />
-        </div>
-      )}
+        ) : (
+          <>
+            <div className="flex items-center gap-3 flex-1">
+              <span className={getChevronClass()}>▼</span>
+              <span className="font-medium text-sm">{bucket.name}</span>
+              <span className={getCountClass()}>
+                {bucket.tasks.length}
+                {bucket.limit && `/${bucket.limit}`}
+              </span>
+            </div>
+
+            {/* Action Buttons */}
+            <BucketActionsCell
+              mode="display"
+              bucket={bucket}
+              isFirst={isFirst}
+              isLast={isLast}
+              onMoveUp={onMoveUp}
+              onMoveDown={onMoveDown}
+              onEdit={() => setIsEditing(true)}
+              onDelete={handleDeleteBucket}
+            />
+          </>
+        )}
+      </div>
 
       {/* Table Content */}
       <AnimatePresence initial={false}>
